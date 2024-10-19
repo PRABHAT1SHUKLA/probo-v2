@@ -11,9 +11,12 @@ app.post("/", async (req, res) => {
     const { nanoid } = await import("nanoid")
     const id = nanoid()
     RedisManager.lpush("engine", id)
+    res.json({
+      msg: "Ok"
+    })
   } catch (error) {
     console.log(error)
   }
 })
 
-app.listen(PORT, () => `server started on port: ${PORT}`)
+app.listen(PORT, () => console.log(`server started on port: ${PORT}`))
