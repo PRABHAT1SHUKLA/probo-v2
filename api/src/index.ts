@@ -1,10 +1,11 @@
 import express from "express"
 import dotenv from "dotenv"
-import { RedisManager } from "./RedisManager"
+import { RedisManager, Sub } from "./RedisManager"
 dotenv.config()
 
 const PORT = process.env.PORT || 3000
 const app = express()
+Sub.subscribe("length")
 
 app.post("/", async (req, res) => {
   try {
@@ -18,5 +19,12 @@ app.post("/", async (req, res) => {
     console.log(error)
   }
 })
+
+
+Sub.on("message", (channel, message) => {
+  console.log(message)
+})
+
+
 
 app.listen(PORT, () => console.log(`server started on port: ${PORT}`))
