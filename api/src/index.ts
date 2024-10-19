@@ -1,5 +1,4 @@
 import express from "express"
-import { nanoid } from "nanoid"
 import dotenv from "dotenv"
 import { RedisManager } from "./RedisManager"
 dotenv.config()
@@ -9,6 +8,7 @@ const app = express()
 
 app.post("/", async (req, res) => {
   try {
+    const { nanoid } = await import("nanoid")
     const id = nanoid()
     RedisManager.lpush("engine", id)
   } catch (error) {
