@@ -94,6 +94,32 @@ saveSnapshot() {
       }
  }
 
+ sellStockBalance(userId:string , quantity:number , stockType:"yes"|"no" , stockSymbol:string){
+
+   
+  const orderBook  = this.orderbooks.find((o)=> o.stockSymbol === stockSymbol)
+  if(!orderBook){
+   throw new Error(`orderbook with ${stockSymbol} does not exist`)
+  }
+  if(stockType="yes"){
+     if(this.stockbalances[userId]![stockSymbol]!.yes!.quantity<quantity){
+         throw new Error(" not enough stock balance to sell")
+     }else{
+      this.stockbalances[userId]![stockSymbol]!.yes!.quantity-=quantity
+      this.stockbalances[userId]![stockSymbol]!.yes!.locked+=quantity
+     }
+  }else{
+    if(this.stockbalances[userId]![stockSymbol]!.no!.quantity<quantity){
+      throw new Error(" not enough stock balance to sell")
+  }else{
+   this.stockbalances[userId]![stockSymbol]!.no!.quantity-=quantity
+   this.stockbalances[userId]![stockSymbol]!.no!.locked+=quantity
+  }
+
+  }
+   
+ }
+
   onRamp(userId: string, amount: number) {
     const userBalance = this.inrbalances[userId];
     if (!userBalance) {
