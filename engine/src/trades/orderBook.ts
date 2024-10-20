@@ -1,3 +1,12 @@
+interface SellOrder{
+  userId : string,
+  stockSymbol: string,
+  price : number,
+  quantity: number,
+  stockType: "yes"|"no"
+
+}
+
 export class OrderBook {
   orderbook: {
     [stockSymbol: string]: {
@@ -43,6 +52,19 @@ export class OrderBook {
       }
     };
   }
+
+  sell(sellorder: SellOrder){
+    if(!this.orderbook[sellorder.stockSymbol]){
+      return {
+        
+      }
+    }
+
+  }
+
+
+
+
 
   // Additional methods to manipulate and query the orderbook can be added here
 }
