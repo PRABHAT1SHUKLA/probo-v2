@@ -2,17 +2,33 @@ import { Orderbook } from "./orderBook";
 import fs from "fs"
 
 interface UserBalance {
-  [key: string]: {
+  [userId: string]: {
       available: number;
       locked: number;
   }
+}
+
+interface StockBalances {
+  [userId: string]: {
+    [stockSymbol: string]: {
+      yes?: {
+        quantity: number;
+        locked: number;
+      };
+      no?: {
+        quantity: number;
+        locked: number;
+      };
+    };
+  };
 }
 
 
 export class Engine{
 
   private orderbooks: Orderbook[] = [];
-  private balances: Map<string, UserBalance> = new Map();
+  private inrbalances: UserBalance = {};
+  private stockbalances: StockBalances = {}
   constructor() {
     let snapshot = null
     try {
