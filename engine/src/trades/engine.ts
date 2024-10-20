@@ -25,10 +25,10 @@ export class Engine{
 
     if (snapshot) {
         const snapshotSnapshot = JSON.parse(snapshot.toString());
-        this.orderbooks = snapshotSnapshot.orderbooks.map((o: any) => new Orderbook(o.baseAsset, o.bids, o.asks, o.lastTradeId, o.currentPrice));
+        this.orderbooks = snapshotSnapshot.orderbooks.map((o: any) => new Orderbook(o.stockSymbol , o.yes , o.no));
         this.balances = new Map(snapshotSnapshot.balances);
     } else {
-        this.orderbooks = [new Orderbook()];
+        this.orderbooks = [new Orderbook('new' ,{} ,{})];
         this.setBaseBalances();
     }
     setInterval(() => {
