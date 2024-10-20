@@ -11,7 +11,7 @@ app.post("/", async (req, res) => {
   try {
     const { nanoid } = await import("nanoid")
     const id = nanoid()
-    RedisManager.lpush("engine", id)
+    RedisManager.lpush("engine", "jxc")
     res.json({
       msg: "Ok"
     })
@@ -19,6 +19,8 @@ app.post("/", async (req, res) => {
     console.log(error)
   }
 })
+
+
 
 
 Sub.on("message", (channel, message) => {
