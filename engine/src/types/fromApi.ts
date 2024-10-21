@@ -14,6 +14,17 @@ export type MessageFromApi ={
       stockType : "yes"|"no"
       userId : string
     }
-  }
+  } | {
+    type : "ONRAMP",
+    data:{
+      userId : string,
+      amount : number
+    }
+   } | {
+    type : "GET_DEPTH",
+    data:{
+      stockSymbol : string
+    }
+   }
 
 }

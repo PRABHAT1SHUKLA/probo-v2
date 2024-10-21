@@ -1,4 +1,4 @@
-import { Orderbook, SellOrder } from "./orderBook";
+import { BuyOrder, Orderbook, SellOrder } from "./orderBook";
 import fs from "fs"
 
 interface UserBalance {
@@ -71,6 +71,13 @@ export class Engine {
 
 
   buyOrder(userId: string, quantity: number, price: number, stockType: "yes"|"no", stockSymbol:string) {
+   
+    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+    if (!orderBook) {
+      throw new Error(`orderbook with ${stockSymbol} does not exist`)
+    }
+
+
     const userBalance = this.inrbalances[userId]
 
     const requiredBalance = price * quantity
@@ -84,8 +91,31 @@ export class Engine {
       this.inrbalances[userId]!.available -= requiredBalance
       this.inrbalances[userId]!.locked += requiredBalance
     }
+
+    if(stockType=="yes"){
+
+      const buyOrder: BuyOrder ={
+        stockType: "yes",
+        price: price,
+        quantity: quantity,
+        userid: userId
+        }
+
+        orderBook.buy(buyOrder)
+
+   }else{
+    const buyOrder: BuyOrder ={
+      stockType: "no",
+      price: price,
+      quantity: quantity,
+      userid: userId
+      }
+
+      orderBook.buy(buyOrder)
+
+   }
     
-    if(this.orderbooks[stockSymbol]) 
+    
    
      
 

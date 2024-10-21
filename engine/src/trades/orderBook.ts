@@ -104,6 +104,14 @@ export class Orderbook {
 
   buy(buyorder: BuyOrder){
 
+    const { userid , quantity, price , stockType} =  buyorder
+  
+    if(stockType=="yes"){
+      
+    }
+
+
+
   }
 }
 
