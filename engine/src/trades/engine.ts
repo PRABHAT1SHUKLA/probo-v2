@@ -138,6 +138,33 @@ onMint(userId: string , amount:number , stockSymbol: string){
   if(!orderBook){
    throw new Error(`orderbook with ${stockSymbol} does not exist`)
   }
+  
+  if(!this.inrbalances[userId]?.available){
+    throw new Error(" sorry u need to first onramp to begin minting")
+  }
+  
+  if(this.inrbalances[userId].available>=amount){ 
+    if(!this.stockbalances[userId]){
+      this.stockbalances[userId]={}
+    }
+
+    const mintedStocks = amount/10
+    if(!this.stockbalances[userId][stockSymbol]){
+      this.stockbalances[userId][stockSymbol]={ yes:{locked:0 , quantity:mintedStocks}, no:{locked:0 , quantity:mintedStocks} }
+    }else{
+      this.stockbalances[userId][stockSymbol].yes!.quantity+=mintedStocks
+      this.stockbalances[userId][stockSymbol].no!.quantity+=mintedStocks
+
+    }
+    
+    return (`minted ${amount} yes and no stocks for ${userId}`)
+   
+   
+
+  }else{
+    throw new Error("insufficient funds to proceed with minting")
+  }
+
 
    
 
