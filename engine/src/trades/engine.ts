@@ -67,18 +67,10 @@ export class Engine {
   }
 
 
-  createSellOrder(userId: string, quantity: number, price: number, stockSymbol: string, stockType: "yes" | "no") {
-
-    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
-    if (!orderBook) {
-      throw new Error("orderbook does not exist")
-    }
-
-    this.checkandLockBalance(userId, quantity, price)
-  }
+    
 
 
-  buyBalance(userId: string, quantity: number, price: number) {
+  buyOrder(userId: string, quantity: number, price: number, stockType: "yes"|"no", stockSymbol:string) {
     const userBalance = this.inrbalances[userId]
 
     const requiredBalance = price * quantity
@@ -92,6 +84,11 @@ export class Engine {
       this.inrbalances[userId]!.available -= requiredBalance
       this.inrbalances[userId]!.locked += requiredBalance
     }
+    
+    if(this.orderbooks[stockSymbol]) 
+   
+     
+
   }
 
   sellStockBalance(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string , price:number) {
@@ -133,17 +130,19 @@ export class Engine {
         price:price,
         stockType:"no",
         quantity: quantity,
+
       }
 
+        
 
-
-        orderBook.sell(order )
+        orderBook.sell(order)
 
     }
     
     
 
   }
+
 
   onRamp(userId: string, amount: number) {
     const userBalance = this.inrbalances[userId];
