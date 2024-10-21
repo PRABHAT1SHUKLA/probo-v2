@@ -1,10 +1,10 @@
-import { Orderbook } from "./orderBook";
+import { Orderbook, SellOrder } from "./orderBook";
 import fs from "fs"
 
 interface UserBalance {
   [userId: string]: {
-      available: number;
-      locked: number;
+    available: number;
+    locked: number;
   }
 }
 
@@ -24,7 +24,7 @@ interface StockBalances {
 }
 
 
-export class Engine{
+export class Engine {
 
   private orderbooks: Orderbook[] = [];
   private inrbalances: UserBalance = {};
@@ -32,142 +32,167 @@ export class Engine{
   constructor() {
     let snapshot = null
     try {
-        if (process.env.WITH_SNAPSHOT) {
-            snapshot = fs.readFileSync("./snapshot.json");
-        }
+      if (process.env.WITH_SNAPSHOT) {
+        snapshot = fs.readFileSync("./snapshot.json");
+      }
     } catch (e) {
-        console.log("No snapshot found");
+      console.log("No snapshot found");
     }
 
     if (snapshot) {
-        const snapshotSnapshot = JSON.parse(snapshot.toString());
-        this.orderbooks = snapshotSnapshot.orderbooks.map((o: any) => new Orderbook(o.stockSymbol , o.yes , o.no));
-        this.inrbalances = snapshotSnapshot.inrbalances;
-        this.stockbalances = snapshotSnapshot.stockbalances;
+      const snapshotSnapshot = JSON.parse(snapshot.toString());
+      this.orderbooks = snapshotSnapshot.orderbooks.map((o: any) => new Orderbook(o.stockSymbol, o.yes, o.no));
+      this.inrbalances = snapshotSnapshot.inrbalances;
+      this.stockbalances = snapshotSnapshot.stockbalances;
     } else {
-        this.orderbooks = [new Orderbook('new' ,{} ,{})];
-        this.setinrBalances();
-        this.setstockbalances()
+      this.orderbooks = [new Orderbook('new', {}, {})];
+      this.setinrBalances();
+      this.setstockbalances()
     }
     setInterval(() => {
-        this.saveSnapshot();
+      this.saveSnapshot();
     }, 1000 * 3);
-}
-setinrBalances(){
-  
-}
+  }
+  setinrBalances() {
+
+  }
 
 
-saveSnapshot() {
-  const snapshotSnapshot = {
+  saveSnapshot() {
+    const snapshotSnapshot = {
       orderbooks: this.orderbooks.map(o => o.getSnapshot()),
       balances: Array.from(this.balances.entries())
+    }
+    fs.writeFileSync("./snapshot.json", JSON.stringify(snapshotSnapshot));
   }
-  fs.writeFileSync("./snapshot.json", JSON.stringify(snapshotSnapshot));
-}
 
 
-  createSellOrder(userId:string , quantity:number, price:number , stockSymbol: string , stockType:"yes"|"no"){
-    
-     const orderBook  = this.orderbooks.find((o)=> o.stockSymbol === stockSymbol)
-     if(!orderBook){
+  createSellOrder(userId: string, quantity: number, price: number, stockSymbol: string, stockType: "yes" | "no") {
+
+    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+    if (!orderBook) {
       throw new Error("orderbook does not exist")
-     }
+    }
 
-     this.checkandLockBalance(userId, quantity, price )
+    this.checkandLockBalance(userId, quantity, price)
   }
 
 
-  buyBalance(userId:string , quantity: number , price:number){
-      const userBalance = this.inrbalances[userId]
+  buyBalance(userId: string, quantity: number, price: number) {
+    const userBalance = this.inrbalances[userId]
 
-      const requiredBalance =  price * quantity
-      if(!userBalance){
-        throw new Error(" user doesn't exist  ")
+    const requiredBalance = price * quantity
+    if (!userBalance) {
+      throw new Error(" user doesn't exist  ")
+    }
+
+    if (this.inrbalances[userId]?.available! < requiredBalance) {
+      throw new Error("Not sufficient balance")
+    } else {
+      this.inrbalances[userId]!.available -= requiredBalance
+      this.inrbalances[userId]!.locked += requiredBalance
+    }
+  }
+
+  sellStockBalance(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string , price:number) {
+
+
+    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+    if (!orderBook) {
+      throw new Error(`orderbook with ${stockSymbol} does not exist`)
+    }
+    if (stockType = "yes") {
+      if (this.stockbalances[userId]![stockSymbol]!.yes!.quantity < quantity) {
+        throw new Error(" not enough stock balance to sell")
+      } else {
+        this.stockbalances[userId]![stockSymbol]!.yes!.quantity -= quantity
+        this.stockbalances[userId]![stockSymbol]!.yes!.locked += quantity
+      }
+      const order: SellOrder={
+        userId: userId,
+        price:price,
+        stockType:"yes",
+        quantity: quantity,
       }
 
-      if(this.inrbalances[userId]?.available!<requiredBalance){
-        throw new Error("Not sufficient balance")
-      }else{
-        this.inrbalances[userId]!.available-=requiredBalance
-        this.inrbalances[userId]!.locked+=requiredBalance
+
+
+        orderBook.sell(order )
+   
+
+    } else {
+      if (this.stockbalances[userId]![stockSymbol]!.no!.quantity < quantity) {
+        throw new Error(" not enough stock balance to sell")
+      } else {
+        this.stockbalances[userId]![stockSymbol]!.no!.quantity -= quantity
+        this.stockbalances[userId]![stockSymbol]!.no!.locked += quantity
       }
- }
 
- sellStockBalance(userId:string , quantity:number , stockType:"yes"|"no" , stockSymbol:string){
+      const order: SellOrder={
+        userId: userId,
+        price:price,
+        stockType:"no",
+        quantity: quantity,
+      }
 
-   
-  const orderBook  = this.orderbooks.find((o)=> o.stockSymbol === stockSymbol)
-  if(!orderBook){
-   throw new Error(`orderbook with ${stockSymbol} does not exist`)
-  }
-  if(stockType="yes"){
-     if(this.stockbalances[userId]![stockSymbol]!.yes!.quantity<quantity){
-         throw new Error(" not enough stock balance to sell")
-     }else{
-      this.stockbalances[userId]![stockSymbol]!.yes!.quantity-=quantity
-      this.stockbalances[userId]![stockSymbol]!.yes!.locked+=quantity
-     }
-  }else{
-    if(this.stockbalances[userId]![stockSymbol]!.no!.quantity<quantity){
-      throw new Error(" not enough stock balance to sell")
-  }else{
-   this.stockbalances[userId]![stockSymbol]!.no!.quantity-=quantity
-   this.stockbalances[userId]![stockSymbol]!.no!.locked+=quantity
-  }
+
+
+        orderBook.sell(order )
+
+    }
+    
+    
 
   }
-   
- }
 
   onRamp(userId: string, amount: number) {
     const userBalance = this.inrbalances[userId];
     if (!userBalance) {
-        this.inrbalances[userId]={
-          locked:0, 
-          available:0
-        }
+      this.inrbalances[userId] = {
+        locked: 0,
+        available: 0
+      }
     } else {
-        userBalance.available += amount;
+      userBalance.available += amount;
     }
-}
-
-onMint(userId: string , amount:number , stockSymbol: string){
- 
-  const orderBook  = this.orderbooks.find((o)=> o.stockSymbol === stockSymbol)
-  if(!orderBook){
-   throw new Error(`orderbook with ${stockSymbol} does not exist`)
-  }
-  
-  if(!this.inrbalances[userId]?.available){
-    throw new Error(" sorry u need to first onramp to begin minting")
-  }
-  
-  if(this.inrbalances[userId].available>=amount){ 
-    if(!this.stockbalances[userId]){
-      this.stockbalances[userId]={}
-    }
-
-    const mintedStocks = amount/10
-    if(!this.stockbalances[userId][stockSymbol]){
-      this.stockbalances[userId][stockSymbol]={ yes:{locked:0 , quantity:mintedStocks}, no:{locked:0 , quantity:mintedStocks} }
-    }else{
-      this.stockbalances[userId][stockSymbol].yes!.quantity+=mintedStocks
-      this.stockbalances[userId][stockSymbol].no!.quantity+=mintedStocks
-
-    }
-    
-    return (`minted ${amount} yes and no stocks for ${userId}`)
-   
-   
-
-  }else{
-    throw new Error("insufficient funds to proceed with minting")
   }
 
+  onMint(userId: string, amount: number, stockSymbol: string) {
 
-   
+    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+    if (!orderBook) {
+      throw new Error(`orderbook with ${stockSymbol} does not exist`)
+    }
 
-}
+    if (!this.inrbalances[userId]?.available) {
+      throw new Error(" sorry u need to first onramp to begin minting")
+    }
+
+    if (this.inrbalances[userId].available >= amount) {
+      if (!this.stockbalances[userId]) {
+        this.stockbalances[userId] = {}
+      }
+
+      const mintedStocks = amount / 10
+      if (!this.stockbalances[userId][stockSymbol]) {
+        this.stockbalances[userId][stockSymbol] = { yes: { locked: 0, quantity: mintedStocks }, no: { locked: 0, quantity: mintedStocks } }
+      } else {
+        this.stockbalances[userId][stockSymbol].yes!.quantity += mintedStocks
+        this.stockbalances[userId][stockSymbol].no!.quantity += mintedStocks
+
+      }
+
+      return (`minted ${amount} yes and no stocks for ${userId}`)
+
+
+
+    } else {
+      throw new Error("insufficient funds to proceed with minting")
+    }
+
+
+
+
+  }
 
 }

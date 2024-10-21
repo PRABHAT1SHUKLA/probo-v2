@@ -1,6 +1,5 @@
-interface SellOrder{
+export interface SellOrder{
   userId : string,
-  stockSymbol: string,
   price : number,
   quantity: number,
   stockType: "yes"|"no"
@@ -40,10 +39,7 @@ export class Orderbook {
   
 
   sell(sellorder: SellOrder){
-    if(!this.orderbook[sellorder.stockSymbol]){
-      return {
-        
-      }
+       
     }
 
   }
