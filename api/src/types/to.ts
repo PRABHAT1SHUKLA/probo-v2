@@ -1,12 +1,14 @@
+export const CREATE_USER="CREATE_USER"
+export const ONRAMP = "ONRAMP"
 
 export type MessageToEngine ={
-  type: "CREATE_USER",
+  type: typeof CREATE_USER,
   data:{
      userId: string
 
   }
 }|{
-  type: "ONRAMP",
+  type: typeof ONRAMP,
   data:{
     userId: string
     amount: number
