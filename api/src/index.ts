@@ -33,5 +33,9 @@ app.post("/onramp/inr" ,async(req,res)=>{
     )
 })
 
+app.post("/order/sell" , async(req, res)=>[
+ 
+])
+
 
 app.listen(PORT, () => console.log(`server started on port: ${PORT}`))

@@ -1,5 +1,6 @@
 export const CREATE_USER="CREATE_USER"
 export const ONRAMP = "ONRAMP"
+export const SELL_ORDER = "SELL_ORDER"
 
 export type MessageToEngine ={
   type: typeof CREATE_USER,
@@ -12,5 +13,14 @@ export type MessageToEngine ={
   data:{
     userId: string
     amount: number
+  }
+}|{
+  type: typeof SELL_ORDER,
+  data:{
+    userId: string
+    price: number
+    quantity: number
+    stockSymbol: string
+    stockType: "yes"|"no"
   }
 }
