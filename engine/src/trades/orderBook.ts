@@ -107,6 +107,26 @@ export class Orderbook {
     const { userid , quantity, price , stockType} =  buyorder
   
     if(stockType=="yes"){
+      if(!this.yes[price]){
+        if(!this.no[price]){
+          this.no[price]={
+              orders :{total:0 , users:{}},
+              reverseOrders:{total:0 , users:{}} 
+          }
+
+          this.no[price].reverseOrders!.total+=quantity
+          this.no[price].reverseOrders!.users={ userid : quantity}
+          
+        }
+        this.no[price].reverseOrders?.users.total+=quantity
+        if(!this.no[price].reverseOrders!.users[userid]){
+          this.no[price].reverseOrders!.users[userid]=quantity
+        }else{
+          this.no[price].reverseOrders!.users[userid]+=quantity
+        }
+
+        
+      }
       
     }
 
