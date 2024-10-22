@@ -51,7 +51,6 @@ app.post("/order/sell", async (req, res) => {
 })
 
 //get user balance
-
 app.get('/balance/inr/:userId', async (req, res) => {
   const userId = req.params.userId;
   const response = await RedisManager.getInstance().sendAndAwait({
@@ -62,10 +61,25 @@ app.get('/balance/inr/:userId', async (req, res) => {
   })
 
   res.json(response.payload)
-
-
-
 })
+
+//minting
+app.post('/trade/mint', async(req,res)=>{
+  const { userId, stockSymbol, quantity, price } = req.body;
+  const response = await RedisManager.getInstance().sendAndAwait({
+    type: MINT,
+    data:{
+      userId : userId,
+      stockSymbol : stockSymbol,
+      quantity: quantity,
+      price: price
+    }
+
+  })
+  res.json(response.payload)
+})
+
+app.post('/order/buy', async(req,res)=>{})
 
 
 app.listen(PORT, () => console.log(`server started on port: ${PORT}`))
