@@ -1,7 +1,7 @@
 import Redis from "ioredis";
 
 import { MessageFromEngine } from "./types/fromEngine";
-import { MessageToEngine } from "./types/to";
+import { MessageToEngine } from "./types/toEngine";
 
 export class RedisManager {
   private client: Redis;
@@ -15,7 +15,7 @@ export class RedisManager {
 
   // This will initialize the RedisManager class only once so that not more than once instance get created.
   public static getInstance() {
-    if(!this.instance) {
+    if (!this.instance) {
       this.instance = new RedisManager()
     }
     return this.instance
@@ -26,7 +26,7 @@ export class RedisManager {
       const id = this.getRandomClientId()
       this.client.subscribe(id)
       this.client.on("message", (channel, message) => {
-        if(channel === id) {
+        if (channel === id) {
           this.client.unsubscribe(id)
           resolve(JSON.parse(message))
         }

@@ -1,7 +1,7 @@
 import express from "express"
 import dotenv from "dotenv"
 import { RedisManager } from "./RedisManager"
-import { CREATE_USER, ONRAMP, SELL_ORDER, USER_BALANCE } from "./types/to"
+import { CREATE_USER, ONRAMP, SELL_ORDER, USER_BALANCE } from "./types/toEngine"
 dotenv.config()
 
 const PORT = process.env.PORT || 3000
