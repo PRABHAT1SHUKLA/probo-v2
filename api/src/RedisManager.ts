@@ -1,6 +1,6 @@
 import Redis from "ioredis";
 
-import { MessageFromEngine } from "./types";
+import { MessageFromEngine } from "./types/fromEngine";
 import { MessageToEngine } from "./types/to";
 
 export class RedisManager {
