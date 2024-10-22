@@ -21,6 +21,21 @@ app.post("/", async (req, res) => {
 })
 
 
+app.post("/user/create/:userId", (req, res)=>{
+  const userId = req.params.userId
+
+  const response = await RedisManager.sendandAwait()
+})
+
+app.post("/onramp/inr" ,async(req,res)=>{
+  const {userId , amount} = req.body
+  let num = Number(amount)
+  const response  = await RedisManager.sendAndAwait({
+    type: ONRAMP
+  }
+    )
+})
+
 
 
 Sub.on("message", (channel, message) => {
