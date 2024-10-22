@@ -1,6 +1,7 @@
 export const CREATE_USER="CREATE_USER"
 export const ONRAMP = "ONRAMP"
 export const SELL_ORDER = "SELL_ORDER"
+export const USER_BALANCE= "USER_BALANCE"
 
 export type MessageToEngine ={
   type: typeof CREATE_USER,
@@ -23,4 +24,11 @@ export type MessageToEngine ={
     stockSymbol: string
     stockType: "yes"|"no"
   }
+}|
+{
+  type: typeof USER_BALANCE,
+  data:{
+    userId: string
+  }
+
 }

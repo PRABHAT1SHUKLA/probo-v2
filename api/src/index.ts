@@ -1,14 +1,14 @@
 import express from "express"
 import dotenv from "dotenv"
 import { RedisManager } from "./RedisManager"
-import { CREATE_USER, ONRAMP, SELL_ORDER } from "./types/to"
+import { CREATE_USER, ONRAMP, SELL_ORDER, USER_BALANCE } from "./types/to"
 dotenv.config()
 
 const PORT = process.env.PORT || 3000
 const app = express()
 
 
-
+//user creation endpoint
 app.post("/user/create/:userId", async (req, res) => {
   const userId = req.params.userId
 
@@ -19,6 +19,8 @@ app.post("/user/create/:userId", async (req, res) => {
     }
   })
 })
+
+//onRamped user balance
 
 app.post("/onramp/inr", async (req, res) => {
   const { userId, amount } = req.body
@@ -34,6 +36,8 @@ app.post("/onramp/inr", async (req, res) => {
   res.json(response.payload)
 })
 
+//sell order endpoint 
+
 app.post("/order/sell", async (req, res) => {
   const { userId, stockSymbol, quantity, price, stockType } = req.body
   const response = await RedisManager.getInstance().sendAndAwait({
@@ -44,6 +48,23 @@ app.post("/order/sell", async (req, res) => {
     }
   })
   res.json(response.payload)
+})
+
+//get user balance
+
+app.get('/balance/inr/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  const response = await RedisManager.getInstance().sendAndAwait({
+    type: USER_BALANCE,
+    data: {
+      userId: userId
+    }
+  })
+
+  res.json(response.payload)
+
+
+
 })
 
 
