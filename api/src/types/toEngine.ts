@@ -30,5 +30,33 @@ export type MessageToEngine ={
   data:{
     userId: string
   }
-
+} | {
+  type: typeof ORDER_BOOK,
+  data: {
+    market: string
+  }
+} | {
+  type: typeof STOCK_SYMBOL,
+  data: {
+    stockSymbol: string
+  }
+} | {
+  type: typeof MINT,
+  data: {
+    userId: string,
+    stockSymbol: string,
+    quantity: string,
+    price: string
+  }
+} | {
+  type: typeof BUY_ORDER,
+  data: {
+    userId: string,
+    stockSymbol: string,
+    quantity: string,
+    price: string,
+    stockType: "yes" | "No"
+  }
+} | {
+  type: 
 }
