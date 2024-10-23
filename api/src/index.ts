@@ -1,7 +1,7 @@
 import express from "express"
 import dotenv from "dotenv"
 import { RedisManager } from "./RedisManager"
-import { CREATE_USER, ONRAMP, SELL_ORDER, USER_BALANCE } from "./types/toEngine"
+import { CREATE_USER, ONRAMP, SELL_ORDER, USER_BALANCE ,MINT, STOCK_SYMBOL, BUY_ORDER } from "./types/toEngine"
 dotenv.config()
 
 const PORT = process.env.PORT || 3000
@@ -41,7 +41,7 @@ app.post("/onramp/inr", async (req, res) => {
 app.post("/order/sell", async (req, res) => {
   const { userId, stockSymbol, quantity, price, stockType } = req.body
   const response = await RedisManager.getInstance().sendAndAwait({
-    type: "SELL_ORDER",
+    type: SELL_ORDER,
     data: {
       userId, stockSymbol, quantity, price, stockType
 
@@ -63,14 +63,29 @@ app.get('/balance/inr/:userId', async (req, res) => {
   res.json(response.payload)
 })
 
+// get ORDERBOOK FOR A SPECIFIC STOCKSYMBOL
+
+app.get('/orderbook/:stocksymbol', async(req,res)=>{
+  const stockSymbol = req.params.stocksymbol;
+  const response = await RedisManager.getInstance().sendAndAwait({
+    type: STOCK_SYMBOL,
+    data:{
+      stockSymbol:stockSymbol
+    }
+  })
+  res.json(response.payload)
+})
+
+
+
 //minting
-app.post('/trade/mint', async(req,res)=>{
+app.post('/trade/mint', async (req, res) => {
   const { userId, stockSymbol, quantity, price } = req.body;
   const response = await RedisManager.getInstance().sendAndAwait({
     type: MINT,
-    data:{
-      userId : userId,
-      stockSymbol : stockSymbol,
+    data: {
+      userId: userId,
+      stockSymbol: stockSymbol,
       quantity: quantity,
       price: price
     }
@@ -79,7 +94,22 @@ app.post('/trade/mint', async(req,res)=>{
   res.json(response.payload)
 })
 
-app.post('/order/buy', async(req,res)=>{})
+app.post('/order/buy', async (req, res) => {
+  const { userId, stockSymbol, quantity, price, stockType } = req.body
+  const response = await RedisManager.getInstance().sendAndAwait({
+    type: BUY_ORDER,
+    data:{
+      userId: userId,
+      stockSymbol: stockSymbol,
+      quantity,
+      price ,
+      stockType     
+    }
+  })
+
+  res.json(response.payload)
+
+})
 
 
 app.listen(PORT, () => console.log(`server started on port: ${PORT}`))
