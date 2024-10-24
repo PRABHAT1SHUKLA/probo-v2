@@ -132,6 +132,7 @@ export class Orderbook {
 
       } else {
         const availableQuantity = this.yes[price].orders.total
+        const reverseOrdersQuantity = this.yes[price].reverseOrders?.total
         let remaining = availableQuantity
         if (availableQuantity >= quantity) {
           this.yes[price].orders.total -= quantity;
@@ -196,13 +197,13 @@ export class Orderbook {
             this.no[price].reverseOrders!.users[userid] = reverseNoorders
 
 
-          }else{
+          } else {
             this.no[price].reverseOrders!.total += reverseNoorders
-            if(!this.no[price].reverseOrders!.users[userid]){
-                 this.no[price].reverseOrders!.users[userid] = reverseNoorders
-            }else{
+            if (!this.no[price].reverseOrders!.users[userid]) {
+              this.no[price].reverseOrders!.users[userid] = reverseNoorders
+            } else {
               this.no[price].reverseOrders!.users[userid] += reverseNoorders
-              this.yes[price]
+
             }
           }
 
