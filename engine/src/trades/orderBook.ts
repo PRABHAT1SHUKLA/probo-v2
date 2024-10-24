@@ -6,11 +6,11 @@ export interface SellOrder {
 
 }
 
-export interface BuyOrder{
-  userid : String,
-  price : number,
+export interface BuyOrder {
+  userid: string,
+  price: number,
   quantity: number,
-  stockType: "yes"|"no"
+  stockType: "yes" | "no"
 }
 
 export interface Order {
@@ -102,38 +102,120 @@ export class Orderbook {
 
 
 
-  buy(buyorder: BuyOrder){
+  buy(buyorder: BuyOrder) {
 
-    const { userid , quantity, price , stockType} =  buyorder
-  
-    if(stockType=="yes"){
-      if(!this.yes[price]){
-        if(!this.no[price]){
-          this.no[price]={
-              orders :{total:0 , users:{}},
-              reverseOrders:{total:0 , users:{}} 
+    const { userid, quantity, price, stockType } = buyorder
+
+    let fills = []
+    let executedQuantity = 0
+
+    if (stockType == "yes") {
+      if (!this.yes[price]) {
+        if (!this.no[price]) {
+          this.no[price] = {
+            orders: { total: 0, users: {} },
+            reverseOrders: { total: quantity, users: {} }
           }
 
-          this.no[price].reverseOrders!.total+=quantity
-          this.no[price].reverseOrders!.users={ userid : quantity}
-          
+          this.no[price].reverseOrders!.users[userid] = quantity
+
         }
-        this.no[price].reverseOrders?.users.total+=quantity
-        if(!this.no[price].reverseOrders!.users[userid]){
-          this.no[price].reverseOrders!.users[userid]=quantity
-        }else{
-          this.no[price].reverseOrders!.users[userid]+=quantity
+        else {
+          this.no[price].reverseOrders!.total += quantity
+          if (!this.no[price].reverseOrders!.users[userid]) {
+            this.no[price].reverseOrders!.users[userid] = quantity
+          } else {
+            this.no[price].reverseOrders!.users[userid] += quantity
+          }
         }
 
-        
+
+      } else {
+        const availableQuantity = this.yes[price].orders.total
+        let remaining = availableQuantity
+        if (availableQuantity >= quantity) {
+          this.yes[price].orders.total -= quantity;
+
+          for (const user in this.yes[price].orders.users) {
+            if (remaining <= 0) break;
+
+            const userOrder = this.yes[price].orders.users[user]!
+
+            if (userOrder <= remaining) {
+              remaining -= userOrder
+
+              executedQuantity += userOrder
+              fills.push({
+                userId: userid,
+                otherUserId: user,
+                quantity: userOrder,
+                price: price
+
+              })
+
+              delete this.yes[price].orders.users[user]
+            } else {
+              this.yes[price].orders.users[user]! -= remaining
+              executedQuantity += remaining
+              fills.push({
+                userId: userid,
+                otherUserId: user,
+                quantity: remaining,
+                price: price
+              })
+            }
+
+
+
+          }
+
+        } else {
+          let reverseNoorders = quantity - this.yes[price].orders.total
+
+          this.yes[price].orders.total = 0
+          for (const user in this.yes[price].orders.users) {
+            const userOrder = this.yes[price].orders.users[user]
+            executedQuantity += userOrder!
+
+            fills.push({
+              userId: userid,
+              otheruserId: user,
+              price: price,
+              quantity: quantity
+
+            })
+            delete this.yes[price].orders.users[user]
+          }
+          if (!this.no[price]) {
+            this.no[price] = {
+              orders: { total: 0, users: {} },
+              reverseOrders: { total: 0, users: {} }
+            }
+
+            this.no[price].reverseOrders!.total = reverseNoorders
+            this.no[price].reverseOrders!.users[userid] = reverseNoorders
+
+
+          }else{
+            this.no[price].reverseOrders!.total += reverseNoorders
+            if(!this.no[price].reverseOrders!.users[userid]){
+                 this.no[price].reverseOrders!.users[userid] = reverseNoorders
+            }else{
+              this.no[price].reverseOrders!.users[userid] += reverseNoorders
+              this.yes[price]
+            }
+          }
+
+        }
       }
-      
     }
 
-
-
   }
+
+
+
 }
+
 
 
 // Additional methods to manipulate and query the orderbook can be added here
