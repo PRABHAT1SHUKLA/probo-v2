@@ -132,7 +132,43 @@ export class Orderbook {
 
       } else {
         const availableQuantity = this.yes[price].orders.total
-        const reverseOrdersQuantity = this.yes[price].reverseOrders?.total
+        const reverseOrdersQuantity = this.yes[price].reverseOrders!.total
+
+        const totalAvailableYesOrders = availableQuantity+reverseOrdersQuantity
+    
+        if(quantity<=totalAvailableYesOrders){
+          //In this case we don't need to create any new reverseorders on the opposite side
+          if(this.yes[price].reverseOrders!.total>=quantity){
+            this.yes[price].reverseOrders!.total-=quantity
+            let remaining = quantity
+            for (const user in this.yes[price].reverseOrders!.users){
+              if(remaining<=0) break;
+              const userOrder = this.yes[price].reverseOrders!.users[user]!
+
+              if(userOrder<=remaining){}
+                 remaining-=userOrder
+
+                 
+              executedQuantity += userOrder
+              fills.push({
+                userId: userid,
+                otherUserId: user,
+                quantity: userOrder,
+                price: 10-price
+
+              })
+            }
+
+          }
+        }
+
+
+
+
+
+
+
+
         let remaining = availableQuantity
         if (availableQuantity >= quantity) {
           this.yes[price].orders.total -= quantity;
