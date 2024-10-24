@@ -1,7 +1,7 @@
 export type MessageFromEngine = {
   type: "USER_CREATED",
   payload:{
-     msg: string
+     msg?:string
      userId: string
   }
 }| {

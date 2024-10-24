@@ -10,7 +10,7 @@ async function main() {
   // }
 
   while(1){
-    const response = await RedisManager.rpop("messages" as string)
+    const response = await RedisManager.rpop("engineQueue" as string)
           if (!response) {
   
           }  else {

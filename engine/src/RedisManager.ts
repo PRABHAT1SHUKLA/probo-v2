@@ -1,4 +1,4 @@
-import {Redis} from "ioredis";
+import Redis from "ioredis";
 
 // export const RedisManager = new Redis()
 
@@ -32,7 +32,7 @@ export class RedisManager {
 //       this.client.publish(channel, JSON.stringify(message));
 //   }
 
-  public sendToApi(clientId: string, message: MessageToApi) {
+  public sendToApi(clientId: string, message: any) {
       this.client.publish(clientId, JSON.stringify(message));
   }
 }

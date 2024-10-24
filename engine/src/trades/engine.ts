@@ -10,6 +10,7 @@ interface UserBalance {
   }
 }
 
+
 interface StockBalances {
   [userId: string]: {
     [stockSymbol: string]: {
@@ -57,13 +58,49 @@ export class Engine {
   }
   setinrBalances() {
 
+     this.inrbalances["user1"]={
+      available: 10000,
+      locked: 0
+     },
+     this.inrbalances["user2"]={
+      available: 10000,
+      locked:0
+     }
+    
+  }
+  setstockbalances(){
+    this.stockbalances["user1"]={
+      btc:{
+        yes:{
+          quantity:50,
+          locked:0
+        },
+        no:{
+          quantity:50,
+          locked:0
+        }
+      }
+    },
+    this.stockbalances["user2"]={
+      btc:{
+        yes:{
+          quantity:50,
+          locked:0
+        },
+        no:{
+          quantity:50,
+          locked:0
+        }
+      }
+    }
+
   }
 
 
   saveSnapshot() {
     const snapshotSnapshot = {
       orderbooks: this.orderbooks.map(o => o.getSnapshot()),
-      balances: Array.from(this.balances.entries())
+      balances: this.inrbalances
     }
     fs.writeFileSync("./snapshot.json", JSON.stringify(snapshotSnapshot));
   }
@@ -101,50 +138,50 @@ export class Engine {
 
         }
         break;
-      case SELL_ORDER:
-        try {
-          const userId = message.data.userId
-          const quantity = message.data.quantity
-          const price = message.data.price
-          const stockType = message.data.stockType
-          const stockSymbol = message.data.stockSymbol
+      // case SELL_ORDER:
+      //   try {
+      //     const userId = message.data.userId
+      //     const quantity = message.data.quantity
+      //     const price = message.data.price
+      //     const stockType = message.data.stockType
+      //     const stockSymbol = message.data.stockSymbol
 
-          const { } = this.sell(userId, quantity, stockType, stockSymbol, price)
+      //     const { } = this.sell(userId, quantity, stockType, stockSymbol, price)
 
-          RedisManager.getInstance().sendToApi(clientId, {
-            type: "ORDER_PLACED",
-            payload: {
+      //     RedisManager.getInstance().sendToApi(clientId, {
+      //       type: "ORDER_PLACED",
+      //       payload: {
 
-              userId: userId,
-              stockSymbol: stockSymbol
-            }
-          })
+      //         userId: userId,
+      //         stockSymbol: stockSymbol
+      //       }
+      //     })
 
 
-        } catch (err) {
-          console.log(err)
-          RedisManager.getInstance().sendToApi(clientId, {
-            type: "ORDER_NOT_PLACED",
-            payload: {
-              orderbook: "",
-              price: "",
-              quantity: "",
-              stockSymbol: ""
-            }
-          })
+      //   } catch (err) {
+      //     console.log(err)
+      //     RedisManager.getInstance().sendToApi(clientId, {
+      //       type: "ORDER_NOT_PLACED",
+      //       payload: {
+      //         orderbook: "",
+      //         price: "",
+      //         quantity: "",
+      //         stockSymbol: ""
+      //       }
+      //     })
 
-        }
-      case ONRAMP:
-        try {
-          const { userId, balance } = this.onRamp({
-            message.userId,
-            message.amount
-          })
+      //   }
+      // case ONRAMP:
+      //   try {
+      //     const { userId, balance } = this.onRamp({
+      //       message.userId,
+      //       message.amount
+      //     })
 
-        }
-        catch (err) {
+      //   }
+      //   catch (err) {
 
-        }
+      //   }
 
     }
   }

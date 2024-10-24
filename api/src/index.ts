@@ -18,6 +18,7 @@ app.post("/user/create/:userId", async (req, res) => {
       userId: userId
     }
   })
+  res.json(response.payload)
 })
 
 //onRamped user balance

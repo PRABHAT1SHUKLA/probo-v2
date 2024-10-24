@@ -31,7 +31,7 @@ export class RedisManager {
           resolve(JSON.parse(message))
         }
       })
-      this.publisher.lpush("messages", JSON.stringify({ clientId: id, message }))
+      this.publisher.lpush("engineQueue", JSON.stringify({ clientId: id, message }))
     })
   }
 
