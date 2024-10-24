@@ -261,6 +261,51 @@ export class Orderbook {
 
 
 
+        } else {
+          // here we need to implement new reverseorders on the opposite or no side
+          if (reverseOrdersQuantity == 0) {
+            let remaining = quantity - availableQuantity
+            this.yes[price].orders.total = 0
+            for (const user in this.yes[price].orders.users) {
+
+              const userOrder = this.yes[price].orders.users[user]!
+
+              executedQuantity += userOrder
+              fills.push({
+                userId: userid,
+                otherUserId: user,
+                quantity: userOrder,
+                price: price
+
+              })
+
+              delete this.yes[price].orders.users[user]
+            }
+
+            if (!this.no[price]) {
+              this.no[price] = {
+                orders: { total: 0, users: {} },
+                reverseOrders: { total: 0, users: {} }
+              }
+
+              this.no[price].reverseOrders!.total = remaining
+              this.no[price].reverseOrders!.users[userid] = remaining
+           }else{
+
+            this.no[price].reverseOrders!.total+=remaining
+            if(!this.no[price].reverseOrders!.users[userid]){
+              this.no[price].reverseOrders!.users[userid]=remaining
+            }else{
+              this.no[price].reverseOrders!.users[userid]+=remaining
+            }
+           }
+
+           
+
+
+
+
+          }
         }
       }
 
@@ -353,7 +398,7 @@ export class Orderbook {
 
 
 
-}
+
 
 
 
