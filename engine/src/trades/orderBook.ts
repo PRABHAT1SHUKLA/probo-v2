@@ -107,6 +107,7 @@ export class Orderbook {
     const { userid, quantity, price, stockType } = buyorder
 
     let fills = []
+    let reverse = []
     let executedQuantity = 0
 
     if (stockType == "yes") {
@@ -134,120 +135,221 @@ export class Orderbook {
         const availableQuantity = this.yes[price].orders.total
         const reverseOrdersQuantity = this.yes[price].reverseOrders!.total
 
-        const totalAvailableYesOrders = availableQuantity+reverseOrdersQuantity
-    
-        if(quantity<=totalAvailableYesOrders){
+        const totalAvailableYesOrders = availableQuantity + reverseOrdersQuantity
+
+        if (quantity <= totalAvailableYesOrders) {
           //In this case we don't need to create any new reverseorders on the opposite side
-          if(this.yes[price].reverseOrders!.total>=quantity){
-            this.yes[price].reverseOrders!.total-=quantity
+          if (this.yes[price].reverseOrders!.total >= quantity) {
+            this.yes[price].reverseOrders!.total -= quantity
             let remaining = quantity
-            for (const user in this.yes[price].reverseOrders!.users){
-              if(remaining<=0) break;
+            for (const user in this.yes[price].reverseOrders!.users) {
+              if (remaining <= 0) break;
               const userOrder = this.yes[price].reverseOrders!.users[user]!
 
-              if(userOrder<=remaining){}
-                 remaining-=userOrder
+              if (userOrder <= remaining) {
+                remaining -= userOrder
 
-                 
-              executedQuantity += userOrder
-              fills.push({
-                userId: userid,
-                otherUserId: user,
-                quantity: userOrder,
-                price: 10-price
 
-              })
+                executedQuantity += userOrder
+                reverse.push({
+                  userId: userid,
+                  otherUserId: user,
+                  quantity: userOrder,
+                  price: 10 - price
+
+                })
+
+
+                delete this.yes[price].reverseOrders!.users[user]
+              } else {
+                this.yes[price].reverseOrders!.users[user]! -= remaining
+                executedQuantity += remaining
+                reverse.push({
+                  userId: userid,
+                  otherUserId: user,
+                  quantity: remaining,
+                  price: 10 - price
+                })
+
+              }
             }
-
-          }
-        }
-
-
-
-
-
-
-
-
-        let remaining = availableQuantity
-        if (availableQuantity >= quantity) {
-          this.yes[price].orders.total -= quantity;
-
-          for (const user in this.yes[price].orders.users) {
-            if (remaining <= 0) break;
-
-            const userOrder = this.yes[price].orders.users[user]!
-
-            if (userOrder <= remaining) {
-              remaining -= userOrder
-
-              executedQuantity += userOrder
-              fills.push({
-                userId: userid,
-                otherUserId: user,
-                quantity: userOrder,
-                price: price
-
-              })
-
-              delete this.yes[price].orders.users[user]
-            } else {
-              this.yes[price].orders.users[user]! -= remaining
-              executedQuantity += remaining
-              fills.push({
-                userId: userid,
-                otherUserId: user,
-                quantity: remaining,
-                price: price
-              })
-            }
-
-
-
-          }
-
-        } else {
-          let reverseNoorders = quantity - this.yes[price].orders.total
-
-          this.yes[price].orders.total = 0
-          for (const user in this.yes[price].orders.users) {
-            const userOrder = this.yes[price].orders.users[user]
-            executedQuantity += userOrder!
-
-            fills.push({
-              userId: userid,
-              otheruserId: user,
-              price: price,
-              quantity: quantity
-
-            })
-            delete this.yes[price].orders.users[user]
-          }
-          if (!this.no[price]) {
-            this.no[price] = {
-              orders: { total: 0, users: {} },
-              reverseOrders: { total: 0, users: {} }
-            }
-
-            this.no[price].reverseOrders!.total = reverseNoorders
-            this.no[price].reverseOrders!.users[userid] = reverseNoorders
-
 
           } else {
-            this.no[price].reverseOrders!.total += reverseNoorders
-            if (!this.no[price].reverseOrders!.users[userid]) {
-              this.no[price].reverseOrders!.users[userid] = reverseNoorders
-            } else {
-              this.no[price].reverseOrders!.users[userid] += reverseNoorders
 
+            if (reverseOrdersQuantity == 0) {
+              let remaining = quantity
+              this.yes[price].orders.total -= quantity
+              for (const user in this.yes[price].orders!.users) {
+                if (remaining <= 0) break;
+                const userOrder = this.yes[price].orders!.users[user]!
+                if (userOrder <= remaining) {
+                  remaining -= userOrder
+
+                  executedQuantity += userOrder
+                  fills.push({
+                    userId: userid,
+                    otherUserId: user,
+                    quantity: userOrder,
+                    price: price
+
+                  })
+
+                  delete this.yes[price].orders.users[user]
+                } else {
+                  this.yes[price].orders.users[user]! -= remaining
+                  executedQuantity += remaining
+                  fills.push({
+                    userId: userid,
+                    otherUserId: user,
+                    quantity: remaining,
+                    price: price
+                  })
+                }
+
+              }
+            } else {
+              let remaining = quantity
+              let reverseOrders = this.yes[price].reverseOrders!.total
+              for (const user in this.yes[price].reverseOrders!.users) {
+
+                reverse.push({
+                  userId: userid,
+                  otherUserId: user,
+                  quantity: remaining,
+                  price: 10 - price
+                })
+                delete this.yes[price].reverseOrders!.users[user]
+              }
+              remaining -= reverseOrders
+              this.yes[price].reverseOrders!.total = 0
+
+              this.yes[price].orders!.total -= remaining
+
+              for (const user in this.yes[price].orders!.users) {
+                if (remaining <= 0) break;
+                const userOrder = this.yes[price].orders!.users[user]!
+                if (userOrder <= remaining) {
+                  remaining -= userOrder
+
+                  executedQuantity += userOrder
+                  fills.push({
+                    userId: userid,
+                    otherUserId: user,
+                    quantity: userOrder,
+                    price: price
+
+                  })
+
+                  delete this.yes[price].orders.users[user]
+                } else {
+                  this.yes[price].orders.users[user]! -= remaining
+                  executedQuantity += remaining
+                  fills.push({
+                    userId: userid,
+                    otherUserId: user,
+                    quantity: remaining,
+                    price: price
+                  })
+                }
+
+              }
             }
           }
+
+
+
+
+
 
         }
       }
-    }
 
+
+
+
+
+
+
+
+      let remaining = availableQuantity
+      if (availableQuantity >= quantity) {
+        this.yes[price].orders.total -= quantity;
+
+        for (const user in this.yes[price].orders.users) {
+          if (remaining <= 0) break;
+
+          const userOrder = this.yes[price].orders.users[user]!
+
+          if (userOrder <= remaining) {
+            remaining -= userOrder
+
+            executedQuantity += userOrder
+            fills.push({
+              userId: userid,
+              otherUserId: user,
+              quantity: userOrder,
+              price: price
+
+            })
+
+            delete this.yes[price].orders.users[user]
+          } else {
+            this.yes[price].orders.users[user]! -= remaining
+            executedQuantity += remaining
+            fills.push({
+              userId: userid,
+              otherUserId: user,
+              quantity: remaining,
+              price: price
+            })
+          }
+
+
+
+        }
+
+      } else {
+        let reverseNoorders = quantity - this.yes[price].orders.total
+
+        this.yes[price].orders.total = 0
+        for (const user in this.yes[price].orders.users) {
+          const userOrder = this.yes[price].orders.users[user]
+          executedQuantity += userOrder!
+
+          fills.push({
+            userId: userid,
+            otheruserId: user,
+            price: price,
+            quantity: quantity
+
+          })
+          delete this.yes[price].orders.users[user]
+        }
+        if (!this.no[price]) {
+          this.no[price] = {
+            orders: { total: 0, users: {} },
+            reverseOrders: { total: 0, users: {} }
+          }
+
+          this.no[price].reverseOrders!.total = reverseNoorders
+          this.no[price].reverseOrders!.users[userid] = reverseNoorders
+
+
+        } else {
+          this.no[price].reverseOrders!.total += reverseNoorders
+          if (!this.no[price].reverseOrders!.users[userid]) {
+            this.no[price].reverseOrders!.users[userid] = reverseNoorders
+          } else {
+            this.no[price].reverseOrders!.users[userid] += reverseNoorders
+
+          }
+        }
+
+      }
+    }
   }
+
+}
 
 
 
