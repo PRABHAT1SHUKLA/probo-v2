@@ -1,4 +1,5 @@
-import {  RedisManager } from "./RedisManager";
+import Redis from "ioredis";
+import { Engine } from "./trades/engine";
 
 async function main() {
   // while(1) {
@@ -9,17 +10,15 @@ async function main() {
   //   }
   // }
 
+  const redisClient = new Redis()
+  const engine = new Engine()
+
   while(1){
-    const response = await RedisManager.rpop("engineQueue" as string)
-          if (!response) {
-  
-          }  else {
-              engine.process(JSON.parse(response));
-          } 
-  
+    const response = await redisClient.rpop("engineQueue")
+    if(response) {
+      engine.process(JSON.parse(response))
+    }
   }
 }
-
-
 
 main()

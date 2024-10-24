@@ -12,14 +12,12 @@ export class RedisManager {
   private static instance: RedisManager;
 
   constructor() {
-      this.client = new Redis();
-    
-      
+    this.client = new Redis();
   }
 
   public static getInstance() {
       if (!this.instance)  {
-          this.instance = new RedisManager();
+          this.instance = new RedisManager;
       }
       return this.instance;
   }
