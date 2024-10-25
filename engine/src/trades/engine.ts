@@ -1,5 +1,5 @@
 import { RedisManager } from "../RedisManager";
-import { CREATE_MARKET, CREATE_USER, MessageFromApi, MINT, ONRAMP, SELL_ORDER } from "../types/fromApi";
+import { CREATE_MARKET, CREATE_USER, MessageFromApi, MINT, ONRAMP, SELL_ORDER, USER_BALANCE } from "../types/fromApi";
 import { BuyOrder, Orderbook, SellOrder } from "./orderBook";
 import fs from "fs";
 import { Fills, reverse } from "./orderBook";
@@ -219,6 +219,28 @@ export class Engine {
         RedisManager.getInstance().sendToApi(clientId, response)
         console.log(this.inrbalances)
         console.log(this.stockbalances)
+        break;
+
+
+
+        case USER_BALANCE:
+
+        if(!this.inrbalances[message.data.userId]){
+          RedisManager.getInstance().sendToApi(clientId, {
+            type: "NO_RESPONSE",
+            payload:{
+              msg: "User does not exist"
+            }
+
+          })
+        }else{
+          RedisManager.getInstance().sendToApi(clientId, {
+            type: "USER_BALANCE",
+            payload:{
+              msg: this.inrbalances[message.data.userId]
+            }
+          })
+        }
         break;
     }
   }
