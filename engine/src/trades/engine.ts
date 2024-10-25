@@ -1,7 +1,8 @@
 import { RedisManager } from "../RedisManager";
 import { CREATE_USER, MessageFromApi, ONRAMP, SELL_ORDER } from "../types/fromApi";
 import { BuyOrder, Orderbook, SellOrder } from "./orderBook";
-import fs from "fs"
+import fs from "fs";
+import { Fills , reverse} from "./orderBook";
 
 interface UserBalance {
   [userId: string]: {
@@ -58,41 +59,41 @@ export class Engine {
   }
   setinrBalances() {
 
-     this.inrbalances["user1"]={
+    this.inrbalances["user1"] = {
       available: 10000,
       locked: 0
-     },
-     this.inrbalances["user2"]={
-      available: 10000,
-      locked:0
-     }
-    
+    },
+      this.inrbalances["user2"] = {
+        available: 10000,
+        locked: 0
+      }
+
   }
-  setstockbalances(){
-    this.stockbalances["user1"]={
-      btc:{
-        yes:{
-          quantity:50,
-          locked:0
+  setstockbalances() {
+    this.stockbalances["user1"] = {
+      btc: {
+        yes: {
+          quantity: 50,
+          locked: 0
         },
-        no:{
-          quantity:50,
-          locked:0
+        no: {
+          quantity: 50,
+          locked: 0
         }
       }
     },
-    this.stockbalances["user2"]={
-      btc:{
-        yes:{
-          quantity:50,
-          locked:0
-        },
-        no:{
-          quantity:50,
-          locked:0
+      this.stockbalances["user2"] = {
+        btc: {
+          yes: {
+            quantity: 50,
+            locked: 0
+          },
+          no: {
+            quantity: 50,
+            locked: 0
+          }
         }
       }
-    }
 
   }
 
@@ -171,17 +172,24 @@ export class Engine {
       //     })
 
       //   }
-      // case ONRAMP:
-      //   try {
-      //     const { userId, balance } = this.onRamp({
-      //       message.userId,
-      //       message.amount
-      //     })
+      case ONRAMP:
+        const userid = message.data.userId
+        const amount = Number(message.data.amount)
+        this.onRamp(userid, amount)
+        break;
 
-      //   }
-      //   catch (err) {
+      case SELL_ORDER:
+        try {
 
-      //   }
+          const userId = message.data.userId
+          const quantity = message.data.quantity
+          const stockType = message.data.stockType
+          const stockSymbol = message.data.stockSymbol
+          const price = message.data.price
+
+        }    
+
+        
 
     }
   }
@@ -219,7 +227,9 @@ export class Engine {
         userid: userId
       }
 
-      orderBook.buy(buyOrder)
+    const {fills[] , reverse , executedQuantity} = orderBook.buy(buyOrder)
+
+    this.updateBalance(fills[], stockSymbol ,stockType)
 
     } else {
       const buyOrder: BuyOrder = {
@@ -240,8 +250,7 @@ export class Engine {
   }
 
   sell(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string, price: number) {
-
-
+    
     const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
     if (!orderBook) {
       throw new Error(`orderbook with ${stockSymbol} does not exist`)
@@ -290,9 +299,6 @@ export class Engine {
       orderBook.sell(order)
 
     }
-
-
-
   }
 
 
@@ -340,6 +346,54 @@ export class Engine {
     } else {
       throw new Error("insufficient funds to proceed with minting")
     }
- }
+  }
+
+  createMarket(stockSymbol:string){
+    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+    if(orderBook){
+      return `market with ${stockSymbol} already exists`
+    }else{
+      this.orderbooks[stockSymbol]={} 
+    }
+  }
+
+  
+
+
+  updateBalance(Fills:Fills[] , stockSymbol:string , stockType: "yes"|"no") {
+    
+    Fills.forEach((fill) =>{
+      const total = fill.amount* fill.price
+      this.inrbalances[fill.otherUserId]!.locked-=total
+
+      if (!this.stockbalances[fill.userId]) {
+        this.stockbalances[fill.userId] = {};
+      }
+
+      if (!this.stockbalances[fill.userId]![stockSymbol]) {
+        this.stockbalances[fill.userId]![stockSymbol] = {
+          yes: { locked: 0, quantity: 0 },
+          no: { locked: 0, quantity: 0 }
+        };
+      }
+       
+      //@ts-ignore
+      this.stockbalances[fill.userId][stockSymbol][stockType].locked += fill.amount;
+      //@ts-ignore
+      this.stockbalances[fill.userId][stockSymbol][stockType].quantity += fill.amount;
+
+    })
+   }
+
+   updateReverseBalance(reverse: reverse[] , stockSymbol:string , stockType: "yes"|"no"){
+    reverse.forEach((reverse)=>{
+      
+    })
+
+   }
+
+  updateStock() { }
+
+
 
 }

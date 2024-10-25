@@ -27,6 +27,19 @@ export interface Order {
   };
 }
 
+export interface Fills {
+  userId : string,
+  otherUserId: string,
+  amount: number,
+  price:number
+}
+
+export interface reverse{
+  userId : string,
+  otherUserId: string,
+  amount: number,
+  price:number
+}
 
 
 
@@ -42,18 +55,13 @@ export class Orderbook {
       this.no = no
   }
 
-
-  getSnapshot(){
+  getSnapshot() {
     return {
-      stockSymbol:this.stockSymbol,
+      stockSymbol: this.stockSymbol,
       yes: this.yes,
       no: this.no
     }
   }
-
-
-
-
 
   sell(sellorder: SellOrder) {
     const { userId, price, quantity, stockType } = sellorder
@@ -98,18 +106,10 @@ export class Orderbook {
           this.no[price]!.orders.users[userId] += quantity
         }
 
-      }
-
-
-
-
-
-
-    }
+      }}
 
 
   }
-
 
 
   buy(buyorder: BuyOrder) {
@@ -119,7 +119,7 @@ export class Orderbook {
     let fills = []
     let reverse = []
     let executedQuantity = 0
-
+     
     if (stockType == "yes") {
       if (!this.yes[price]) {
         if (!this.no[price]) {
@@ -300,20 +300,83 @@ export class Orderbook {
 
               this.no[price].reverseOrders!.total = remaining
               this.no[price].reverseOrders!.users[userid] = remaining
-           }else{
+            } else {
 
-            this.no[price].reverseOrders!.total+=remaining
-            if(!this.no[price].reverseOrders!.users[userid]){
-              this.no[price].reverseOrders!.users[userid]=remaining
-            }else{
-              this.no[price].reverseOrders!.users[userid]+=remaining
+              this.no[price].reverseOrders!.total += remaining
+              if (!this.no[price].reverseOrders!.users[userid]) {
+                this.no[price].reverseOrders!.users[userid] = remaining
+              } else {
+                this.no[price].reverseOrders!.users[userid] += remaining
+              }
             }
-           }
 
-            }else if(availableQuantity==0){
-            
+          } else if (availableQuantity == 0) {
+
             let remaining = quantity - reverseOrdersQuantity
             this.yes[price].reverseOrders!.total = 0
+            for (const user in this.yes[price].reverseOrders!.users) {
+
+              const userOrder = this.yes[price].reverseOrders!.users[user]!
+
+              executedQuantity += userOrder
+              reverse.push({
+                userId: userid,
+                otherUserId: user,
+                quantity: userOrder,
+                price: price
+
+              })
+
+              delete this.yes[price].orders.users[user]
+            }
+
+            delete this.yes[price]
+            if (!this.no[price]) {
+              this.no[price] = {
+                orders: { total: 0, users: {} },
+                reverseOrders: { total: 0, users: {} }
+              }
+
+              this.no[price].reverseOrders!.total = remaining
+              this.no[price].reverseOrders!.users[userid] = remaining
+            } else {
+
+              this.no[price].reverseOrders!.total += remaining
+              if (!this.no[price].reverseOrders!.users[userid]) {
+                this.no[price].reverseOrders!.users[userid] = remaining
+              } else {
+                this.no[price].reverseOrders!.users[userid] += remaining
+              }
+
+
+            }
+
+
+
+
+
+
+
+
+          } else {
+            let remaining = quantity - (availableQuantity + reverseOrdersQuantity)
+            this.yes[price].reverseOrders!.total = 0
+            for (const user in this.yes[price].reverseOrders!.users) {
+
+              const userOrder = this.yes[price].reverseOrders!.users[user]!
+
+              executedQuantity += userOrder
+              reverse.push({
+                userId: userid,
+                otherUserId: user,
+                quantity: userOrder,
+                price: price
+
+              })
+
+              delete this.yes[price].orders.users[user]
+            }
+            this.yes[price].orders!.total = 0
             for (const user in this.yes[price].orders.users) {
 
               const userOrder = this.yes[price].orders.users[user]!
@@ -329,6 +392,7 @@ export class Orderbook {
 
               delete this.yes[price].orders.users[user]
             }
+            delete this.yes[price]
 
             if (!this.no[price]) {
               this.no[price] = {
@@ -338,113 +402,34 @@ export class Orderbook {
 
               this.no[price].reverseOrders!.total = remaining
               this.no[price].reverseOrders!.users[userid] = remaining
-           }else{
+            } else {
 
-            this.no[price].reverseOrders!.total+=remaining
-            if(!this.no[price].reverseOrders!.users[userid]){
-              this.no[price].reverseOrders!.users[userid]=remaining
-            }else{
-              this.no[price].reverseOrders!.users[userid]+=remaining
+              this.no[price].reverseOrders!.total += remaining
+              if (!this.no[price].reverseOrders!.users[userid]) {
+                this.no[price].reverseOrders!.users[userid] = remaining
+              } else {
+                this.no[price].reverseOrders!.users[userid] += remaining
+              }
+
+
             }
-            
 
-           }
-
-           
-
-
-
-
-          
 
           }
         }
-      }
-
-
-
-
-
-
-
-
-      let remaining = availableQuantity
-      if (availableQuantity >= quantity) {
-        this.yes[price].orders.total -= quantity;
-
-        for (const user in this.yes[price].orders.users) {
-          if (remaining <= 0) break;
-
-          const userOrder = this.yes[price].orders.users[user]!
-
-          if (userOrder <= remaining) {
-            remaining -= userOrder
-
-            executedQuantity += userOrder
-            fills.push({
-              userId: userid,
-              otherUserId: user,
-              quantity: userOrder,
-              price: price
-
-            })
-
-            delete this.yes[price].orders.users[user]
-          } else {
-            this.yes[price].orders.users[user]! -= remaining
-            executedQuantity += remaining
-            fills.push({
-              userId: userid,
-              otherUserId: user,
-              quantity: remaining,
-              price: price
-            })
-          }
-
-
-
-        }
-
-      } else {
-        let reverseNoorders = quantity - this.yes[price].orders.total
-
-        this.yes[price].orders.total = 0
-        for (const user in this.yes[price].orders.users) {
-          const userOrder = this.yes[price].orders.users[user]
-          executedQuantity += userOrder!
-
-          fills.push({
-            userId: userid,
-            otheruserId: user,
-            price: price,
-            quantity: quantity
-
-          })
-          delete this.yes[price].orders.users[user]
-        }
-        if (!this.no[price]) {
-          this.no[price] = {
-            orders: { total: 0, users: {} },
-            reverseOrders: { total: 0, users: {} }
-          }
-
-          this.no[price].reverseOrders!.total = reverseNoorders
-          this.no[price].reverseOrders!.users[userid] = reverseNoorders
-
-
-        } else {
-          this.no[price].reverseOrders!.total += reverseNoorders
-          if (!this.no[price].reverseOrders!.users[userid]) {
-            this.no[price].reverseOrders!.users[userid] = reverseNoorders
-          } else {
-            this.no[price].reverseOrders!.users[userid] += reverseNoorders
-
-          }
-        }
-
       }
     }
   }
+  
+  getDepth(stockSymbol: string){
+    return {
+      yesOrders : this.yes,
+      noOrders: this.no
+    }
+
+  }
+
+
 
 }
 
