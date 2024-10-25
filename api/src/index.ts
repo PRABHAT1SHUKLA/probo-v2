@@ -1,7 +1,7 @@
 import express from "express"
 import dotenv from "dotenv"
 import { RedisManager } from "./RedisManager"
-import { CREATE_USER, ONRAMP, SELL_ORDER, USER_BALANCE ,MINT, STOCK_SYMBOL, BUY_ORDER } from "./types/toEngine"
+import { CREATE_USER, ONRAMP, SELL_ORDER, USER_BALANCE ,MINT, STOCK_SYMBOL, BUY_ORDER ,CREATE_MARKET} from "./types/toEngine"
 dotenv.config()
 
 const PORT = process.env.PORT || 3000
@@ -110,6 +110,20 @@ app.post('/order/buy', async (req, res) => {
 
   res.json(response.payload)
 
+})
+
+//create new market
+
+app.post('create/market', async(req,res)=>{
+  const { stockSymbol} = req.body
+  const response = await RedisManager.getInstance().sendAndAwait({
+    type: CREATE_MARKET,
+    data:{
+      stockSymbol: stockSymbol
+    }
+  })
+
+  res.json(response.payload)
 })
 
 

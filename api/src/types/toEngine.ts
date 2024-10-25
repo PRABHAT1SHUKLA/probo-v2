@@ -6,6 +6,7 @@ export const BUY_ORDER = "BUY_ORDER";
 export const MINT = "MINT";
 export const ORDER_BOOK = "ORDER_BOOK";
 export const STOCK_SYMBOL = "STOCK_SYMBOL";
+export const CREATE_MARKET= "CREATE_MARKET"
 
 export type MessageToEngine =
   | {
@@ -67,4 +68,9 @@ export type MessageToEngine =
         quantity: string;
         price: string;
       };
+    } | {
+      type: typeof CREATE_MARKET;
+      data:{
+        stockSymbol : string
+      }
     };

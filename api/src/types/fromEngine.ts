@@ -14,4 +14,9 @@ export type MessageFromEngine = {
       locked : number
     }
   }
+}|{
+  type:"MARKET_CREATED",
+  payload:{
+    msg:string
+  }
 }
