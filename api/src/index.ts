@@ -6,6 +6,7 @@ dotenv.config()
 
 const PORT = process.env.PORT || 3000
 const app = express()
+app.use(express.json())
 
 
 //user creation endpoint
@@ -114,7 +115,7 @@ app.post('/order/buy', async (req, res) => {
 
 //create new market
 
-app.post('create/market', async(req,res)=>{
+app.post('/create/market', async (req,res)=>{
   const { stockSymbol} = req.body
   const response = await RedisManager.getInstance().sendAndAwait({
     type: CREATE_MARKET,
