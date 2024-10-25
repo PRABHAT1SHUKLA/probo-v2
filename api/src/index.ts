@@ -82,7 +82,7 @@ app.get('/orderbook/:stocksymbol', async(req,res)=>{
 
 //minting
 app.post('/trade/mint', async (req, res) => {
-  const { userId, stockSymbol, quantity, price } = req.body;
+  const { userId, stockSymbol, price } = req.body;
   const response = await RedisManager.getInstance().sendAndAwait({
     type: MINT,
     data: {
@@ -115,7 +115,7 @@ app.post('/order/buy', async (req, res) => {
 //create new market
 
 app.post('/create/market', async (req,res)=>{
-  const { stockSymbol} = req.body
+  const { stockSymbol } = req.body
   const response = await RedisManager.getInstance().sendAndAwait({
     type: CREATE_MARKET,
     data:{

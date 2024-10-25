@@ -9,8 +9,8 @@ export class RedisManager {
   private static instance: RedisManager;
 
   private constructor() {
-    this.client = new Redis("rediss://default:AVb9AAIjcDE1OGE5ZDFmYzllZDg0ZTk1OWZhNDIxMjRkNzJhZTU1MXAxMA@giving-parakeet-22269.upstash.io:6379")
-    this.publisher = new Redis("rediss://default:AVb9AAIjcDE1OGE5ZDFmYzllZDg0ZTk1OWZhNDIxMjRkNzJhZTU1MXAxMA@giving-parakeet-22269.upstash.io:6379")
+    this.client = new Redis("rediss://default:AU4rAAIjcDEzODcyZGQxOTNiYjI0ZTViOGNhNTg1ZjllMmRkNGU4YnAxMA@caring-hippo-20011.upstash.io:6379")
+    this.publisher = new Redis("rediss://default:AU4rAAIjcDEzODcyZGQxOTNiYjI0ZTViOGNhNTg1ZjllMmRkNGU4YnAxMA@caring-hippo-20011.upstash.io:6379")
   }
 
   // This will initialize the RedisManager class only once so that not more than once instance get created.

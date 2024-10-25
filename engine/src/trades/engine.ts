@@ -217,6 +217,9 @@ export class Engine {
 
         const response = this.onMint(message.data.userId, message.data.price, message.data.stockSymbol)
         RedisManager.getInstance().sendToApi(clientId, response)
+        console.log(this.inrbalances)
+        console.log(this.stockbalances)
+        break;
     }
   }
 
