@@ -8,12 +8,7 @@ export type MessageFromEngine = {
   type: "ONRAMPED",
   payload:{
     msg: string
-    userId: string
-    balance: {
-      available: number
-      locked : number
     }
-  }
 }|{
   type:"MARKET_CREATED",
   payload:{
