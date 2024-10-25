@@ -196,58 +196,58 @@ export class Engine {
 
 
 
-  buyOrder(userId: string, quantity: number, price: number, stockType: "yes" | "no", stockSymbol: string) {
+  // buyOrder(userId: string, quantity: number, price: number, stockType: "yes" | "no", stockSymbol: string) {
 
-    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
-    if (!orderBook) {
-      throw new Error(`orderbook with ${stockSymbol} does not exist`)
-    }
-
-
-    const userBalance = this.inrbalances[userId]
-
-    const requiredBalance = price * quantity
-    if (!userBalance) {
-      throw new Error(" user doesn't exist  ")
-    }
-
-    if (this.inrbalances[userId]?.available! < requiredBalance) {
-      throw new Error("Not sufficient balance")
-    } else {
-      this.inrbalances[userId]!.available -= requiredBalance
-      this.inrbalances[userId]!.locked += requiredBalance
-    }
-
-    if (stockType == "yes") {
-
-      const buyOrder: BuyOrder = {
-        stockType: "yes",
-        price: price,
-        quantity: quantity,
-        userid: userId
-      }
-
-    const {fills[] , reverse , executedQuantity} = orderBook.buy(buyOrder)
-
-    this.updateBalance(fills[], stockSymbol ,stockType)
-
-    } else {
-      const buyOrder: BuyOrder = {
-        stockType: "no",
-        price: price,
-        quantity: quantity,
-        userid: userId
-      }
-
-      orderBook.buy(buyOrder)
-
-    }
+  //   const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+  //   if (!orderBook) {
+  //     throw new Error(`orderbook with ${stockSymbol} does not exist`)
+  //   }
 
 
+  //   const userBalance = this.inrbalances[userId]
+
+  //   const requiredBalance = price * quantity
+  //   if (!userBalance) {
+  //     throw new Error(" user doesn't exist  ")
+  //   }
+
+  //   if (this.inrbalances[userId]?.available! < requiredBalance) {
+  //     throw new Error("Not sufficient balance")
+  //   } else {
+  //     this.inrbalances[userId]!.available -= requiredBalance
+  //     this.inrbalances[userId]!.locked += requiredBalance
+  //   }
+
+  //   if (stockType == "yes") {
+
+  //     const buyOrder: BuyOrder = {
+  //       stockType: "yes",
+  //       price: price,
+  //       quantity: quantity,
+  //       userid: userId
+  //     }
+
+  //   const {fills[] , reverse , executedQuantity} = orderBook.buy(buyOrder)
+
+  //   this.updateBalance(fills[], stockSymbol ,stockType)
+
+  //   } else {
+  //     const buyOrder: BuyOrder = {
+  //       stockType: "no",
+  //       price: price,
+  //       quantity: quantity,
+  //       userid: userId
+  //     }
+
+  //     orderBook.buy(buyOrder)
+
+  //   }
 
 
 
-  }
+
+
+  // }
 
   sell(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string, price: number) {
     
@@ -350,10 +350,9 @@ export class Engine {
 
   createMarket(stockSymbol:string){
     const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
-    if(orderBook){
-      return `market with ${stockSymbol} already exists`
-    }else{
-      this.orderbooks[stockSymbol]={} 
+    if(!orderBook){
+      const newOrderBook = new Orderbook(stockSymbol)
+      this.orderbooks.push(newOrderBook)
     }
   }
 

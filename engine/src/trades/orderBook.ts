@@ -14,7 +14,6 @@ export interface BuyOrder {
 }
 
 export interface Order {
-
   [price: string]: {
     orders: {
       total: number;
@@ -46,13 +45,11 @@ export interface reverse{
 
 export class Orderbook {
   stockSymbol: string;
-  yes: Order;
-  no: Order;
+  yes: Order = {};
+  no: Order = {};
 
-  constructor(stockSymbol: string, yes: Order, no: Order) {
-    this.stockSymbol = stockSymbol,
-      this.yes = yes,
-      this.no = no
+  constructor(stockSymbol: string) {
+    this.stockSymbol = stockSymbol;
   }
 
   getSnapshot() {
