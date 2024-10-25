@@ -1,5 +1,5 @@
 import { RedisManager } from "../RedisManager";
-import { CREATE_MARKET, CREATE_USER, MessageFromApi, MINT, ONRAMP, SELL_ORDER, USER_BALANCE } from "../types/fromApi";
+import { CREATE_MARKET, CREATE_USER, MessageFromApi, MINT, ONRAMP, SELL_ORDER, STOCK_SYMBOL, USER_BALANCE } from "../types/fromApi";
 import { BuyOrder, Orderbook, SellOrder } from "./orderBook";
 import fs from "fs";
 import { Fills, reverse } from "./orderBook";
@@ -242,6 +242,26 @@ export class Engine {
           })
         }
         break;
+
+        case STOCK_SYMBOL:
+
+        const orderBook = this.orderbooks.find((o) => o.stockSymbol === message.data.stockSymbol)
+        if(!orderBook){
+          RedisManager.getInstance().sendToApi(clientId, {
+            type: "NOT_FOUND",
+            payload:{
+              msg: `orderBook for ${message.data.stockSymbol} does not exist`
+            }
+          })
+        }else{
+          RedisManager.getInstance().sendToApi(clientId,{
+            type:"ORDERBOOK",
+            payload:{
+              msg: orderBook
+            }
+          })
+        }
+        
     }
   }
 
