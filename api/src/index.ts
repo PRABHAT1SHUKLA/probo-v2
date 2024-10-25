@@ -31,7 +31,7 @@ app.post("/onramp/inr", async (req, res) => {
     type: ONRAMP,
     data: {
       userId,
-      amount
+      amount: num
     }
   }
   )

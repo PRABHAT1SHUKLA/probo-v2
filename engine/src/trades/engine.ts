@@ -215,13 +215,8 @@ export class Engine {
       case MINT:
 
 
-        this.onMint(message.data.userId, message.data.price, message.data.stockSymbol)
-        RedisManager.getInstance().sendToApi(clientId, {
-          type: "MINTED",
-          payload: {
-            msg: `minted new stocks for ${message.data.userId} for ${message.data.stockSymbol} market`,
-           }
-        })
+        const response = this.onMint(message.data.userId, message.data.price, message.data.stockSymbol)
+        RedisManager.getInstance().sendToApi(clientId, response)
     }
   }
 
@@ -350,11 +345,21 @@ export class Engine {
   onMint(userId: string, amount: number, stockSymbol: string) {
     const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
     if (!orderBook) {
-      return `orderbook with ${stockSymbol} does not exist`
+      return {
+        type: "Error",
+        payload: {
+          msg: `orderbook with ${stockSymbol} does not exist`
+        }
+      }
     }
 
     if (!this.inrbalances[userId]) {
-      return "sorry u need to first onramp to begin minting"
+      return {
+        type: "Error",
+        payload: {
+          msg: "sorry u need to first onramp to begin minting"
+        }
+      }
     }
 
     if (this.inrbalances[userId].available >= amount) {
@@ -371,9 +376,19 @@ export class Engine {
 
       }
 
-      return (`minted ${amount} yes and no stocks for ${userId}`)
+      return {
+        type: "Success",
+        payload: {
+          msg: `minted ${amount} yes and no stocks for ${userId}`
+        }
+      }
     } else {
-      throw new Error("insufficient funds to proceed with minting")
+      return {
+        type: "Insufficient balance",
+        payload: {
+          msg: "insufficient funds to proceed with minting"
+        }
+      }
     }
   }
 
