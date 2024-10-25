@@ -227,7 +227,7 @@ export class Engine {
 
         if(!this.inrbalances[message.data.userId]){
           RedisManager.getInstance().sendToApi(clientId, {
-            type: "NO_RESPONSE",
+            type: "NOT_PRESENT",
             payload:{
               msg: "User does not exist"
             }

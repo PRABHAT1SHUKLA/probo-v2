@@ -19,4 +19,24 @@ export type MessageFromEngine = {
   payload: {
     msg?: string,
   }
+} | {
+  type:"ORDERBOOK",
+  payload:{
+    order:any
+  }
+} | {
+  type: "NOT_FOUND",
+  payload:{
+    msg: string
+  }
+} | {
+  type: "NOT_PRESENT",
+  payload:{
+    msg: string
+  }
+} | {
+  type:"USER_BALANCE",
+  payload:{
+    msg: string
+  }
 }
