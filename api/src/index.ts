@@ -88,7 +88,6 @@ app.post('/trade/mint', async (req, res) => {
     data: {
       userId: userId,
       stockSymbol: stockSymbol,
-      quantity: quantity,
       price: price
     }
 

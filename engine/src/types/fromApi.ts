@@ -71,7 +71,6 @@ export type MessageFromApi =
       data: {
         userId: string;
         stockSymbol: string;
-        quantity: string;
-        price: string;
+        price: number;
       };
     };

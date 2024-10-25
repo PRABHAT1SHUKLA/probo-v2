@@ -1,8 +1,8 @@
 import { RedisManager } from "../RedisManager";
-import { CREATE_MARKET, CREATE_USER, MessageFromApi, ONRAMP, SELL_ORDER } from "../types/fromApi";
+import { CREATE_MARKET, CREATE_USER, MessageFromApi, MINT, ONRAMP, SELL_ORDER } from "../types/fromApi";
 import { BuyOrder, Orderbook, SellOrder } from "./orderBook";
 import fs from "fs";
-import { Fills , reverse} from "./orderBook";
+import { Fills, reverse } from "./orderBook";
 
 interface UserBalance {
   [userId: string]: {
@@ -195,7 +195,7 @@ export class Engine {
 
       case CREATE_MARKET:
         const isMarketCreated = this.createMarket(message.data.stockSymbol)
-        if(isMarketCreated) {
+        if (isMarketCreated) {
           RedisManager.getInstance().sendToApi(clientId, {
             type: "MARKET_CREATED",
             payload: {
@@ -211,6 +211,17 @@ export class Engine {
           })
         }
         break;
+
+      case MINT:
+
+
+        this.onMint(message.data.userId, message.data.price, message.data.stockSymbol)
+        RedisManager.getInstance().sendToApi(clientId, {
+          type: "MINTED",
+          payload: {
+            msg: `minted new stocks for ${message.data.userId} for ${message.data.stockSymbol} market`,
+           }
+        })
     }
   }
 
@@ -270,7 +281,7 @@ export class Engine {
   // }
 
   // sell(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string, price: number) {
-    
+
   //   const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
   //   if (!orderBook) {
   //     throw new Error(`orderbook with ${stockSymbol} does not exist`)
@@ -334,16 +345,16 @@ export class Engine {
       userBalance.available += amount;
     }
   }
-  
-  
+
+
   onMint(userId: string, amount: number, stockSymbol: string) {
     const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
     if (!orderBook) {
-      throw new Error(`orderbook with ${stockSymbol} does not exist`)
+      return `orderbook with ${stockSymbol} does not exist`
     }
 
-    if (!this.inrbalances[userId]?.available) {
-      throw new Error(" sorry u need to first onramp to begin minting")
+    if (!this.inrbalances[userId]) {
+      return "sorry u need to first onramp to begin minting"
     }
 
     if (this.inrbalances[userId].available >= amount) {
@@ -366,20 +377,20 @@ export class Engine {
     }
   }
 
-  createMarket(stockSymbol:string){
+  createMarket(stockSymbol: string) {
     const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
-    if(!orderBook){
+    if (!orderBook) {
       const newOrderBook = new Orderbook(stockSymbol, null, null)
       this.orderbooks.push(newOrderBook)
       return true
     }
   }
 
-  
+
 
 
   // updateBalance(Fills:Fills[] , stockSymbol:string , stockType: "yes"|"no") {
-    
+
   //   Fills.forEach((fill) =>{
   //     const total = fill.amount* fill.price
   //     this.inrbalances[fill.otherUserId]!.locked-=total
@@ -394,7 +405,7 @@ export class Engine {
   //         no: { locked: 0, quantity: 0 }
   //       };
   //     }
-       
+
   //     //@ts-ignore
   //     this.stockbalances[fill.userId][stockSymbol][stockType].locked += fill.amount;
   //     //@ts-ignore
@@ -405,7 +416,7 @@ export class Engine {
 
   //  updateReverseBalance(reverse: reverse[] , stockSymbol:string , stockType: "yes"|"no"){
   //   reverse.forEach((reverse)=>{
-      
+
   //   })
 
   //  }

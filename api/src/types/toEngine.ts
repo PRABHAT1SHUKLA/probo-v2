@@ -65,8 +65,7 @@ export type MessageToEngine =
       data: {
         userId: string;
         stockSymbol: string;
-        quantity: string;
-        price: string;
+        price: number;
       };
     } | {
       type: typeof CREATE_MARKET;
