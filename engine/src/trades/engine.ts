@@ -373,9 +373,12 @@ export class Engine {
       const mintedStocks = amount / 10
       if (!this.stockbalances[userId][stockSymbol]) {
         this.stockbalances[userId][stockSymbol] = { yes: { locked: 0, quantity: mintedStocks }, no: { locked: 0, quantity: mintedStocks } }
+        this.inrbalances[userId].available-=amount
+
       } else {
         this.stockbalances[userId][stockSymbol].yes!.quantity += mintedStocks
         this.stockbalances[userId][stockSymbol].no!.quantity += mintedStocks
+        this.inrbalances[userId].available-=amount
 
       }
 
