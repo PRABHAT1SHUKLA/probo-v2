@@ -2,7 +2,7 @@ import { RedisManager } from "../RedisManager";
 import { CREATE_MARKET, CREATE_USER, MessageFromApi, MINT, ONRAMP, SELL_ORDER, STOCK_SYMBOL, USER_BALANCE } from "../types/fromApi";
 import { BuyOrder, Orderbook, SellOrder } from "./orderBook";
 import fs from "fs";
-import { Fills, reverse } from "./orderBook";
+import { Fills, reverse,Order } from "./orderBook";
 
 interface UserBalance {
   [userId: string]: {
@@ -136,39 +136,45 @@ export class Engine {
           })
         }
         break;
-      // case SELL_ORDER:
-      //   try {
-      //     const userId = message.data.userId
-      //     const quantity = message.data.quantity
-      //     const price = message.data.price
-      //     const stockType = message.data.stockType
-      //     const stockSymbol = message.data.stockSymbol
-
-      //     const { } = this.sell(userId, quantity, stockType, stockSymbol, price)
-
-      //     RedisManager.getInstance().sendToApi(clientId, {
-      //       type: "ORDER_PLACED",
-      //       payload: {
-
-      //         userId: userId,
-      //         stockSymbol: stockSymbol
-      //       }
-      //     })
 
 
-      //   } catch (err) {
-      //     console.log(err)
-      //     RedisManager.getInstance().sendToApi(clientId, {
-      //       type: "ORDER_NOT_PLACED",
-      //       payload: {
-      //         orderbook: "",
-      //         price: "",
-      //         quantity: "",
-      //         stockSymbol: ""
-      //       }
-      //     })
 
-      //   }
+
+      case SELL_ORDER:
+        try {
+          const userId = message.data.userId
+          const quantity = message.data.quantity
+          const price = message.data.price
+          const stockType = message.data.stockType
+          const stockSymbol = message.data.stockSymbol
+
+          const { } = this.sell(userId, quantity, stockType, stockSymbol, price)
+
+          RedisManager.getInstance().sendToApi(clientId, {
+            type: "ORDER_PLACED",
+            payload: {
+
+              userId: userId,
+              stockSymbol: stockSymbol
+            }
+          })
+
+
+        } catch (err) {
+          console.log(err)
+          RedisManager.getInstance().sendToApi(clientId, {
+            type: "ORDER_NOT_PLACED",
+            payload: {
+              orderbook: "",
+              price: "",
+              quantity: "",
+              stockSymbol: ""
+            }
+          })
+
+        }
+
+
       case ONRAMP:
         const id = message.data.userId
         const amount = Number(message.data.amount)
@@ -267,12 +273,16 @@ export class Engine {
 
 
 
-  // buyOrder(userId: string, quantity: number, price: number, stockType: "yes" | "no", stockSymbol: string) {
+  //  buyOrder(userId: string, quantity: number, price: number, stockType: "yes" | "no", stockSymbol: string) {
 
   //   const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+     
+    
+
   //   if (!orderBook) {
   //     throw new Error(`orderbook with ${stockSymbol} does not exist`)
   //   }
+
 
 
   //   const userBalance = this.inrbalances[userId]
@@ -313,67 +323,78 @@ export class Engine {
   //     orderBook.buy(buyOrder)
 
   //   }
-
-
-
-
-
-  // }
-
-  // sell(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string, price: number) {
-
-  //   const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
-  //   if (!orderBook) {
-  //     throw new Error(`orderbook with ${stockSymbol} does not exist`)
-  //   }
-  //   if (stockType = "yes") {
-  //     if (this.stockbalances[userId]![stockSymbol]!.yes!.quantity < quantity) {
-  //       throw new Error("Not Enough yes stocks to sell")
-  //     } else {
-  //       this.stockbalances[userId]![stockSymbol]!.yes!.quantity -= quantity
-  //       this.stockbalances[userId]![stockSymbol]!.yes!.locked += quantity
-  //     }
-  //     const order: SellOrder = {
-  //       userId: userId,
-  //       price: price,
-  //       stockType: "yes",
-  //       quantity: quantity,
-  //     }
-
-
-
-  //     orderBook.sell(order)
-
-  //     // to implement websocket logic here to make orerbook changes in ui
-
-  //     return { userId, quantity, price, stockType, stockSymbol }
-
-
-  //   } else {
-  //     if (this.stockbalances[userId]![stockSymbol]!.no!.quantity < quantity) {
-  //       throw new Error(" not enough stock balance to sell")
-  //     } else {
-  //       this.stockbalances[userId]![stockSymbol]!.no!.quantity -= quantity
-  //       this.stockbalances[userId]![stockSymbol]!.no!.locked += quantity
-  //     }
-
-  //     const order: SellOrder = {
-  //       userId: userId,
-  //       price: price,
-  //       stockType: "no",
-  //       quantity: quantity,
-
-  //     }
-
-  //     //implement ws logic here
-
-  //     orderBook.sell(order)
-
-  //   }
   // }
 
 
-  // 
+  filterAndSortOrders(orderBook: Order, maxPrice: number) {
+    // Convert the orderBook object into an array of objects with price as a number
+    const filteredOrders = Object.entries(orderBook)
+      .filter(([price]) => parseFloat(price) <= maxPrice) // Filter by maxPrice
+      .map(([price, data]) => ({ price: parseFloat(price), ...data })); // Convert price to number and add to object
+  
+    // Sort the filtered orders by price in ascending order
+    return filteredOrders.sort((a, b) => a.price - b.price);
+  }
+
+
+  
+
+  sell(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string, price: number) {
+
+    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+    if (!orderBook) {
+      throw new Error(`orderbook with ${stockSymbol} does not exist`)
+    }
+    if (stockType = "yes") {
+      if (this.stockbalances[userId]![stockSymbol]!.yes!.quantity < quantity) {
+        throw new Error("Not Enough yes stocks to sell")
+      } else {
+        this.stockbalances[userId]![stockSymbol]!.yes!.quantity -= quantity
+        this.stockbalances[userId]![stockSymbol]!.yes!.locked += quantity
+      }
+      const order: SellOrder = {
+        userId: userId,
+        price: price,
+        stockType: "yes",
+        quantity: quantity,
+      }
+
+
+
+      orderBook.sell(order)
+
+      // to implement websocket logic here to make orerbook changes in ui
+
+      return { userId, quantity, price, stockType, stockSymbol }
+
+
+    } else {
+      if (this.stockbalances[userId]![stockSymbol]!.no!.quantity < quantity) {
+        throw new Error(" not enough stock balance to sell")
+      } else {
+        this.stockbalances[userId]![stockSymbol]!.no!.quantity -= quantity
+        this.stockbalances[userId]![stockSymbol]!.no!.locked += quantity
+      }
+
+      const order: SellOrder = {
+        userId: userId,
+        price: price,
+        stockType: "no",
+        quantity: quantity,
+
+      }
+
+      //implement ws logic here
+
+      orderBook.sell(order)
+
+      return { userId, quantity, price, stockType, stockSymbol }
+
+    }
+  }
+
+
+  
   onRamp(userId: string, amount: number) {
     const userBalance = this.inrbalances[userId];
     if (!userBalance) {
