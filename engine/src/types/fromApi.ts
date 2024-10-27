@@ -39,7 +39,7 @@ export type MessageFromApi =
         stockSymbol: string;
         quantity: number;
         price: number;
-        stockType: "yes" | "No";
+        stockType: "yes" | "no";
       };
     }
   | {
