@@ -37,8 +37,8 @@ export type MessageToEngine =
       data: {
         userId: string;
         stockSymbol: string;
-        quantity: string;
-        price: string;
+        quantity: number;
+        price: number;
         stockType: "yes" | "No";
       };
     }
