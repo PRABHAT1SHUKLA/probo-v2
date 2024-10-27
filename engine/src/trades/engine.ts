@@ -298,11 +298,8 @@ export class Engine {
         quantity: quantity,
         userId: userId
       }
-
-    orderBook.buy(buyOrder)
-
-    this.updateBalance(fills[], stockSymbol ,stockType)
-
+      orderBook.buy(buyOrder)
+      this.updateBalance(fills, stockSymbol ,stockType)
     } else {
       const buyOrder: BuyOrder = {
         stockType: "no",
@@ -310,11 +307,8 @@ export class Engine {
         quantity: quantity,
         userId: userId
       }
-
       orderBook.buy(buyOrder)
-
     }
-
   }
 
   // sell(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string, price: number) {
