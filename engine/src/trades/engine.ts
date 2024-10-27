@@ -1,16 +1,25 @@
 import { RedisManager } from "../RedisManager";
-import { CREATE_MARKET, CREATE_USER, MessageFromApi, MINT, ONRAMP, SELL_ORDER, STOCK_SYMBOL, USER_BALANCE } from "../types/fromApi";
+import {
+  CREATE_MARKET,
+  CREATE_USER,
+  MessageFromApi,
+  MINT,
+  ONRAMP,
+  SELL_ORDER,
+  STOCK_SYMBOL,
+  USER_BALANCE,
+} from "../types/fromApi";
 import { BuyOrder, Orderbook, SellOrder } from "./orderBook";
 import fs from "fs";
 import { Fills, reverse } from "./orderBook";
+import { availableMemory } from "process";
 
 interface UserBalance {
   [userId: string]: {
     available: number;
     locked: number;
-  }
+  };
 }
-
 
 interface StockBalances {
   [userId: string]: {
@@ -27,12 +36,10 @@ interface StockBalances {
   };
 }
 
-
 export class Engine {
-
   private orderbooks: Orderbook[] = [];
   private inrbalances: UserBalance = {};
-  private stockbalances: StockBalances = {}
+  private stockbalances: StockBalances = {};
   constructor() {
     // let snapshot = null
     // try {
@@ -42,7 +49,6 @@ export class Engine {
     // } catch (e) {
     //   console.log("No snapshot found");
     // }
-
     // if (snapshot) {
     //   const snapshotSnapshot = JSON.parse(snapshot.toString());
     //   this.orderbooks = snapshotSnapshot.orderbooks.map((o: any) => new Orderbook(o.stockSymbol, o.yes, o.no));
@@ -58,45 +64,41 @@ export class Engine {
     // }, 1000 * 3);
   }
   setinrBalances() {
-
-    this.inrbalances["user1"] = {
+    (this.inrbalances["user1"] = {
       available: 10000,
-      locked: 0
-    },
-      this.inrbalances["user2"] = {
+      locked: 0,
+    }),
+      (this.inrbalances["user2"] = {
         available: 10000,
-        locked: 0
-      }
-
+        locked: 0,
+      });
   }
   setstockbalances() {
-    this.stockbalances["user1"] = {
+    (this.stockbalances["user1"] = {
       btc: {
         yes: {
           quantity: 50,
-          locked: 0
+          locked: 0,
         },
         no: {
           quantity: 50,
-          locked: 0
-        }
-      }
-    },
-      this.stockbalances["user2"] = {
+          locked: 0,
+        },
+      },
+    }),
+      (this.stockbalances["user2"] = {
         btc: {
           yes: {
             quantity: 50,
-            locked: 0
+            locked: 0,
           },
           no: {
             quantity: 50,
-            locked: 0
-          }
-        }
-      }
-
+            locked: 0,
+          },
+        },
+      });
   }
-
 
   // saveSnapshot() {
   //   const snapshotSnapshot = {
@@ -106,197 +108,214 @@ export class Engine {
   //   fs.writeFileSync("./snapshot.json", JSON.stringify(snapshotSnapshot));
   // }
 
-
-  process({ message, clientId }: { message: MessageFromApi, clientId: string }) {
-
+  process({
+    message,
+    clientId,
+  }: {
+    message: MessageFromApi;
+    clientId: string;
+  }) {
     switch (message.type) {
       case CREATE_USER:
-        const userId = message.data.userId
+        const userId = message.data.userId;
         if (!this.inrbalances[userId]) {
           this.inrbalances[userId] = {
             available: 0,
-            locked: 0
-          }
+            locked: 0,
+          };
 
-          this.stockbalances[userId] = {}
-          console.log(this.inrbalances)
+          this.stockbalances[userId] = {};
+          console.log(this.inrbalances);
 
           RedisManager.getInstance().sendToApi(clientId, {
             type: "USER_CREATED",
             payload: {
-              userId: userId
-            }
-          })
+              userId: userId,
+            },
+          });
         } else {
           RedisManager.getInstance().sendToApi(clientId, {
             type: "AlreadyExists",
             payload: {
-              msg: "User already exists"
-            }
-          })
+              msg: "User already exists",
+            },
+          });
         }
         break;
       case SELL_ORDER:
         try {
-          const userId = message.data.userId
-          const quantity = message.data.quantity
-          const price = message.data.price
-          const stockType = message.data.stockType
-          const stockSymbol = message.data.stockSymbol
+          const userId = message.data.userId;
+          const quantity = message.data.quantity;
+          const price = message.data.price;
+          const stockType = message.data.stockType;
+          const stockSymbol = message.data.stockSymbol;
 
-          const response = this.sell(userId, quantity, stockType, stockSymbol, price)
+          const response = this.sell(
+            userId,
+            quantity,
+            stockType,
+            stockSymbol,
+            price
+          );
 
-          RedisManager.getInstance().sendToApi(clientId, response)
+          RedisManager.getInstance().sendToApi(clientId, response);
+          console.log(JSON.stringify(this.orderbooks));
         } catch (err) {
-          console.log(err)
+          console.log(err);
           RedisManager.getInstance().sendToApi(clientId, {
             type: "ORDER_NOT_PLACED",
             payload: {
               orderbook: "",
               price: "",
               quantity: "",
-              stockSymbol: ""
-            }
-          })
+              stockSymbol: "",
+            },
+          });
         }
         break;
       case ONRAMP:
         const id = message.data.userId;
-        const amount = Number(message.data.amount)
-        this.onRamp(id, amount)
-        console.log(this.inrbalances)
+        const amount = Number(message.data.amount);
+        this.onRamp(id, amount);
+        console.log(this.inrbalances);
         RedisManager.getInstance().sendToApi(clientId, {
           type: "ONRAMPED",
           payload: {
-            msg: `OnRamped user ${id} with ${amount}`
-          }
-        })
+            msg: `OnRamped user ${id} with ${amount}`,
+          },
+        });
         break;
 
       case CREATE_MARKET:
-        const isMarketCreated = this.createMarket(message.data.stockSymbol)
+        const isMarketCreated = this.createMarket(message.data.stockSymbol);
         if (isMarketCreated) {
           RedisManager.getInstance().sendToApi(clientId, {
             type: "MARKET_CREATED",
             payload: {
-              msg: `Market with ${message.data.stockSymbol} has been created`
-            }
-          })
+              msg: `Market with ${message.data.stockSymbol} has been created`,
+            },
+          });
         } else {
           RedisManager.getInstance().sendToApi(clientId, {
             type: "Error",
             payload: {
-              msg: "Something went wrong"
-            }
-          })
+              msg: "Something went wrong",
+            },
+          });
         }
         break;
 
       case MINT:
-        const response = this.onMint(message.data.userId, message.data.price, message.data.stockSymbol)
-        RedisManager.getInstance().sendToApi(clientId, response)
-        console.log(this.inrbalances)
-        console.log(JSON.stringify(this.stockbalances))
+        const response = this.onMint(
+          message.data.userId,
+          message.data.price,
+          message.data.stockSymbol
+        );
+        RedisManager.getInstance().sendToApi(clientId, response);
+        console.log(this.inrbalances);
+        console.log(JSON.stringify(this.stockbalances));
         break;
 
-
-
-        case USER_BALANCE:
-
-        if(!this.inrbalances[message.data.userId]){
+      case USER_BALANCE:
+        if (!this.inrbalances[message.data.userId]) {
           RedisManager.getInstance().sendToApi(clientId, {
             type: "NOT_PRESENT",
-            payload:{
-              msg: "User does not exist"
-            }
-
-          })
-        }else{
+            payload: {
+              msg: "User does not exist",
+            },
+          });
+        } else {
           RedisManager.getInstance().sendToApi(clientId, {
             type: "USER_BALANCE",
-            payload:{
-              msg: this.inrbalances[message.data.userId]
-            }
-          })
+            payload: {
+              msg: this.inrbalances[message.data.userId],
+            },
+          });
         }
         break;
 
-        case STOCK_SYMBOL:
-
-        const orderBook = this.orderbooks.find((o) => o.stockSymbol === message.data.stockSymbol)
-        if(!orderBook){
+      case STOCK_SYMBOL:
+        const orderBook = this.orderbooks.find(
+          (o) => o.stockSymbol === message.data.stockSymbol
+        );
+        if (!orderBook) {
           RedisManager.getInstance().sendToApi(clientId, {
             type: "NOT_FOUND",
-            payload:{
-              msg: `orderBook for ${message.data.stockSymbol} does not exist`
-            }
-          })
-        }else{
-          RedisManager.getInstance().sendToApi(clientId,{
-            type:"ORDERBOOK",
-            payload:{
-              msg: orderBook
-            }
-          })
+            payload: {
+              msg: `orderBook for ${message.data.stockSymbol} does not exist`,
+            },
+          });
+        } else {
+          RedisManager.getInstance().sendToApi(clientId, {
+            type: "ORDERBOOK",
+            payload: {
+              msg: orderBook,
+            },
+          });
         }
-        
     }
   }
 
+  buyOrder(userId: string, quantity: number, price: number, stockType: "yes" | "no", stockSymbol: string) {
+    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+    if (!orderBook) {
+      return {
+        type: "OrderBookNotFound",
+        payload: {
+          msg: `orderbook with ${stockSymbol} does not exist`
+        }
+      }
+    }
 
+    const userBalance = this.inrbalances[userId]
 
-  // buyOrder(userId: string, quantity: number, price: number, stockType: "yes" | "no", stockSymbol: string) {
+    const requiredBalance = price * quantity
+    if (!userBalance) {
+      return {
+        type: "UserNotExist",
+        payload: {
+          msg: "user doesn't exist"
+        }
+      }
+    }
 
-  //   const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
-  //   if (!orderBook) {
-  //     throw new Error(`orderbook with ${stockSymbol} does not exist`)
-  //   }
+    if (userBalance.available < requiredBalance) {
+      return {
+        type: "Not sufficient fund",
+        payload: {
+          msg: "Not sufficient balance"
+        }
+      } 
+    } else {
+      this.inrbalances[userId]!.available -= requiredBalance
+      this.inrbalances[userId]!.locked += requiredBalance
+    }
 
+    if (stockType == "yes") {
+      const buyOrder: BuyOrder = {
+        stockType: "yes",
+        price: price,
+        quantity: quantity,
+        userId: userId
+      }
 
-  //   const userBalance = this.inrbalances[userId]
+    orderBook.buy(buyOrder)
 
-  //   const requiredBalance = price * quantity
-  //   if (!userBalance) {
-  //     throw new Error(" user doesn't exist  ")
-  //   }
+    this.updateBalance(fills[], stockSymbol ,stockType)
 
-  //   if (this.inrbalances[userId]?.available! < requiredBalance) {
-  //     throw new Error("Not sufficient balance")
-  //   } else {
-  //     this.inrbalances[userId]!.available -= requiredBalance
-  //     this.inrbalances[userId]!.locked += requiredBalance
-  //   }
+    } else {
+      const buyOrder: BuyOrder = {
+        stockType: "no",
+        price: price,
+        quantity: quantity,
+        userId: userId
+      }
 
-  //   if (stockType == "yes") {
+      orderBook.buy(buyOrder)
 
-  //     const buyOrder: BuyOrder = {
-  //       stockType: "yes",
-  //       price: price,
-  //       quantity: quantity,
-  //       userid: userId
-  //     }
+    }
 
-  //   const {fills[] , reverse , executedQuantity} = orderBook.buy(buyOrder)
-
-  //   this.updateBalance(fills[], stockSymbol ,stockType)
-
-  //   } else {
-  //     const buyOrder: BuyOrder = {
-  //       stockType: "no",
-  //       price: price,
-  //       quantity: quantity,
-  //       userid: userId
-  //     }
-
-  //     orderBook.buy(buyOrder)
-
-  //   }
-
-
-
-
-
-  // }
+  }
 
   // sell(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string, price: number) {
 
@@ -318,14 +337,11 @@ export class Engine {
   //       quantity: quantity,
   //     }
 
-
-
   //     orderBook.sell(order)
 
   //     // to implement websocket logic here to make orerbook changes in ui
 
   //     return { userId, quantity, price, stockType, stockSymbol }
-
 
   //   } else {
   //     if (this.stockbalances[userId]![stockSymbol]!.no!.quantity < quantity) {
@@ -350,130 +366,134 @@ export class Engine {
   //   }
   // }
 
-
-  // 
+  //
   onRamp(userId: string, amount: number) {
     const userBalance = this.inrbalances[userId];
     if (!userBalance) {
       this.inrbalances[userId] = {
         locked: 0,
-        available: amount
-      }
+        available: amount,
+      };
     } else {
       userBalance.available += amount;
     }
   }
 
-
   onMint(userId: string, amount: number, stockSymbol: string) {
-    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+    const orderBook = this.orderbooks.find(
+      (o) => o.stockSymbol === stockSymbol
+    );
     if (!orderBook) {
       return {
         type: "Error",
         payload: {
-          msg: `orderbook with ${stockSymbol} does not exist`
-        }
-      }
+          msg: `orderbook with ${stockSymbol} does not exist`,
+        },
+      };
     }
 
     if (!this.inrbalances[userId]) {
       return {
         type: "Error",
         payload: {
-          msg: "sorry u need to first onramp to begin minting"
-        }
-      }
+          msg: "sorry u need to first onramp to begin minting",
+        },
+      };
     }
 
     if (this.inrbalances[userId].available >= amount) {
       if (!this.stockbalances[userId]) {
-        this.stockbalances[userId] = {}
+        this.stockbalances[userId] = {};
       }
 
-      const mintedStocks = amount / 10
+      const mintedStocks = amount / 10;
       if (!this.stockbalances[userId][stockSymbol]) {
-        this.stockbalances[userId][stockSymbol] = { yes: { locked: 0, quantity: mintedStocks }, no: { locked: 0, quantity: mintedStocks } }
-        this.inrbalances[userId].available-=amount
-
+        this.stockbalances[userId][stockSymbol] = {
+          yes: { locked: 0, quantity: mintedStocks },
+          no: { locked: 0, quantity: mintedStocks },
+        };
+        this.inrbalances[userId].available -= amount;
       } else {
-        this.stockbalances[userId][stockSymbol].yes!.quantity += mintedStocks
-        this.stockbalances[userId][stockSymbol].no!.quantity += mintedStocks
-        this.inrbalances[userId].available-=amount
-
+        this.stockbalances[userId][stockSymbol].yes!.quantity += mintedStocks;
+        this.stockbalances[userId][stockSymbol].no!.quantity += mintedStocks;
+        this.inrbalances[userId].available -= amount;
       }
 
       return {
         type: "Success",
         payload: {
-          msg: `minted ${amount} yes and no stocks for ${userId}`
-        }
-      }
+          msg: `minted ${amount} yes and no stocks for ${userId}`,
+        },
+      };
     } else {
       return {
         type: "Insufficient balance",
         payload: {
-          msg: "insufficient funds to proceed with minting"
-        }
-      }
+          msg: "insufficient funds to proceed with minting",
+        },
+      };
     }
   }
 
   createMarket(stockSymbol: string) {
-    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+    const orderBook = this.orderbooks.find(
+      (o) => o.stockSymbol === stockSymbol
+    );
     if (!orderBook) {
-      const newOrderBook = new Orderbook(stockSymbol, null, null)
-      this.orderbooks.push(newOrderBook)
-      return true
+      const newOrderBook = new Orderbook(stockSymbol, null, null);
+      this.orderbooks.push(newOrderBook);
+      return true;
     }
   }
-
 
   // filterAndSortOrders(orderBook: Order, maxPrice: number) {
   //   // Convert the orderBook object into an array of objects with price as a number
   //   const filteredOrders = Object.entries(orderBook)
   //     .filter(([price]) => parseFloat(price) <= maxPrice) // Filter by maxPrice
   //     .map(([price, data]) => ({ price: parseFloat(price), ...data })); // Convert price to number and add to object
-  
+
   //   // Sort the filtered orders by price in ascending order
   //   return filteredOrders.sort((a, b) => a.price - b.price);
   // }
 
-
-  
-
-  sell(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string, price: number) {
-
-    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+  sell(
+    userId: string,
+    quantity: number,
+    stockType: "yes" | "no",
+    stockSymbol: string,
+    price: number
+  ) {
+    const orderBook = this.orderbooks.find(
+      (o) => o.stockSymbol === stockSymbol
+    );
     if (!orderBook) {
       return {
         type: "Error",
         payload: {
-          msg: `orderbook with ${stockSymbol} does not exist`
-        }
-      }
+          msg: `orderbook with ${stockSymbol} does not exist`,
+        },
+      };
     }
-    if (stockType = "yes") {
+    if ((stockType = "yes")) {
       if (this.stockbalances[userId]![stockSymbol]!.yes!.quantity < quantity) {
         return {
           type: "Order_Cancelled",
           payload: {
-            msg: "Not Enough yes stocks to sell"
-          }
-        }
+            msg: "Not Enough yes stocks to sell",
+          },
+        };
       } else {
-        this.stockbalances[userId]![stockSymbol]!.yes!.quantity -= quantity
-        this.stockbalances[userId]![stockSymbol]!.yes!.locked += quantity
+        this.stockbalances[userId]![stockSymbol]!.yes!.quantity -= quantity;
+        this.stockbalances[userId]![stockSymbol]!.yes!.locked += quantity;
       }
       const order: SellOrder = {
         userId: userId,
         price: price,
         stockType: "yes",
         quantity: quantity,
-      }
+      };
 
-
-
-      orderBook.sell(order)
+      orderBook.sell(order);
 
       // to implement websocket logic here to make orerbook changes in ui
 
@@ -481,61 +501,50 @@ export class Engine {
         type: "Order_Placed",
         payload: {
           userId,
-          stockSymbol
-        }
-      }
-
-
+          stockSymbol,
+        },
+      };
     } else {
-      if (this.stockbalances[userId]![stockSymbol]!.no!.quantity < quantity) {
-        throw new Error(" not enough stock balance to sell")
-      } else {
-        this.stockbalances[userId]![stockSymbol]!.no!.quantity -= quantity
-        this.stockbalances[userId]![stockSymbol]!.no!.locked += quantity
-      }
-
+        if (this.stockbalances[userId]![stockSymbol]!.no!.quantity < quantity) {
+          throw new Error(" not enough stock balance to sell");
+        } else {
+          this.stockbalances[userId]![stockSymbol]!.no!.quantity -= quantity;
+          this.stockbalances[userId]![stockSymbol]!.no!.locked += quantity;
+        }
       const order: SellOrder = {
         userId: userId,
         price: price,
         stockType: "no",
         quantity: quantity,
-
-      }
-
-      //implement ws logic here
-
-      orderBook.sell(order)
-
-      return { userId, quantity, price, stockType, stockSymbol }
-
+      };
+        //implement ws logic here
+      orderBook.sell(order);
+      return { userId, quantity, price, stockType, stockSymbol };
     }
   }
 
+  updateBalance(Fills: Fills[] , stockSymbol: string , stockType: "yes"|"no") {
+    Fills.forEach((fill) =>{
+      const total = fill.amount * fill.price
+      this.inrbalances[fill.otherUserId]!.locked -= total
 
-  // updateBalance(Fills:Fills[] , stockSymbol:string , stockType: "yes"|"no") {
+      if (!this.stockbalances[fill.userId]) {
+        this.stockbalances[fill.userId] = {};
+      }
 
-  //   Fills.forEach((fill) =>{
-  //     const total = fill.amount* fill.price
-  //     this.inrbalances[fill.otherUserId]!.locked-=total
+      if (!this.stockbalances[fill.userId]![stockSymbol]) {
+        this.stockbalances[fill.userId]![stockSymbol] = {
+          yes: { locked: 0, quantity: 0 },
+          no: { locked: 0, quantity: 0 }
+        };
+      }
 
-  //     if (!this.stockbalances[fill.userId]) {
-  //       this.stockbalances[fill.userId] = {};
-  //     }
-
-  //     if (!this.stockbalances[fill.userId]![stockSymbol]) {
-  //       this.stockbalances[fill.userId]![stockSymbol] = {
-  //         yes: { locked: 0, quantity: 0 },
-  //         no: { locked: 0, quantity: 0 }
-  //       };
-  //     }
-
-  //     //@ts-ignore
-  //     this.stockbalances[fill.userId][stockSymbol][stockType].locked += fill.amount;
-  //     //@ts-ignore
-  //     this.stockbalances[fill.userId][stockSymbol][stockType].quantity += fill.amount;
-
-  //   })
-  //  }
+      //@ts-ignore
+      this.stockbalances[fill.userId][stockSymbol][stockType].locked += fill.amount;
+      //@ts-ignore
+      this.stockbalances[fill.userId][stockSymbol][stockType].quantity += fill.amount;
+    })
+   }
 
   //  updateReverseBalance(reverse: reverse[] , stockSymbol:string , stockType: "yes"|"no"){
   //   reverse.forEach((reverse)=>{
@@ -546,4 +555,3 @@ export class Engine {
 
   // updateStock() { }
 }
-

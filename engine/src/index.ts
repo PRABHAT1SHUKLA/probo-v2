@@ -10,7 +10,7 @@ async function main() {
   //   }
   // }
 
-  const redisClient = new Redis("rediss://default:AU4rAAIjcDEzODcyZGQxOTNiYjI0ZTViOGNhNTg1ZjllMmRkNGU4YnAxMA@caring-hippo-20011.upstash.io:6379")
+  const redisClient = new Redis()
   const engine = new Engine()
 
   while(1){
