@@ -456,13 +456,7 @@ export class Engine {
   //   return filteredOrders.sort((a, b) => a.price - b.price);
   // }
 
-  sell(
-    userId: string,
-    quantity: number,
-    stockType: "yes" | "no",
-    stockSymbol: string,
-    price: number
-  ) {
+  sell(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string, price: number) {
     const orderBook = this.orderbooks.find(
       (o) => o.stockSymbol === stockSymbol
     );
@@ -482,21 +476,19 @@ export class Engine {
             msg: "Not Enough yes stocks to sell",
           },
         };
-      } else {
-        this.stockbalances[userId]![stockSymbol]!.yes!.quantity -= quantity;
-        this.stockbalances[userId]![stockSymbol]!.yes!.locked += quantity;
-      }
+      } 
+      this.stockbalances[userId]![stockSymbol]!.yes!.quantity -= quantity;
+      this.stockbalances[userId]![stockSymbol]!.yes!.locked += quantity;
+      
       const order: SellOrder = {
         userId: userId,
         price: price,
         stockType: "yes",
         quantity: quantity,
       };
-
       orderBook.sell(order);
 
       // to implement websocket logic here to make orerbook changes in ui
-
       return {
         type: "Order_Placed",
         payload: {
@@ -505,12 +497,17 @@ export class Engine {
         },
       };
     } else {
-        if (this.stockbalances[userId]![stockSymbol]!.no!.quantity < quantity) {
-          throw new Error(" not enough stock balance to sell");
-        } else {
-          this.stockbalances[userId]![stockSymbol]!.no!.quantity -= quantity;
-          this.stockbalances[userId]![stockSymbol]!.no!.locked += quantity;
+      if (this.stockbalances[userId]![stockSymbol]!.no!.quantity < quantity) {
+        return {
+          type: "NotEnoughStockBalance",
+          payload: {
+            msg: "not enough stock balance to sell"
+          }
         }
+      } 
+      this.stockbalances[userId]![stockSymbol]!.no!.quantity -= quantity;
+      this.stockbalances[userId]![stockSymbol]!.no!.locked += quantity;
+        
       const order: SellOrder = {
         userId: userId,
         price: price,
