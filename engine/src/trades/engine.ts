@@ -10,7 +10,7 @@ import {
   STOCK_SYMBOL,
   USER_BALANCE,
 } from "../types/fromApi";
-import { BuyOrder, Orderbook, SellOrder } from "./orderBook";
+import { BuyOrder, Orderbook, SellOrder , Order} from "./orderBook";
 import fs from "fs";
 import { Fills, reverse } from "./orderBook";
 import { availableMemory } from "process";
@@ -283,60 +283,72 @@ export class Engine {
     }
   }
 
-  // buyOrder(userId: string, quantity: number, price: number, stockType: "yes" | "no", stockSymbol: string) {
-  //   const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
-  //   if (!orderBook) {
-  //     return {
-  //       type: "OrderBookNotFound",
-  //       payload: {
-  //         msg: `orderbook with ${stockSymbol} does not exist`
-  //       }
-  //     }
-  //   }
+  buyOrder(userId: string, quantity: number, price: number, stockType: "yes" | "no", stockSymbol: string) {
+    const orderBook = this.orderbooks.find((o) => o.stockSymbol === stockSymbol)
+    if (!orderBook) {
+      return {
+        type: "OrderBookNotFound",
+        payload: {
+          msg: `orderbook with ${stockSymbol} does not exist`
+        }
+      }
+    }
 
-  //   const userBalance = this.inrbalances[userId]
+   
 
-  //   const requiredBalance = price * quantity
-  //   if (!userBalance) {
-  //     return {
-  //       type: "UserNotExist",
-  //       payload: {
-  //         msg: "user doesn't exist"
-  //       }
-  //     }
-  //   }
+    const userBalance = this.inrbalances[userId]
 
-  //   if (userBalance.available < requiredBalance) {
-  //     return {
-  //       type: "Not sufficient fund",
-  //       payload: {
-  //         msg: "Not sufficient balance"
-  //       }
-  //     } 
-  //   } else {
-  //     this.inrbalances[userId]!.available -= requiredBalance
-  //     this.inrbalances[userId]!.locked += requiredBalance
-  //   }
+    const requiredBalance = price * quantity
+    if (!userBalance) {
+      return {
+        type: "UserNotExist",
+        payload: {
+          msg: "user doesn't exist"
+        }
+      }
+    }    
 
-  //   if (stockType == "yes") {
-  //     const buyOrder: BuyOrder = {
-  //       stockType: "yes",
-  //       price: price,
-  //       quantity: quantity,
-  //       userId: userId
-  //     }
-  //     orderBook.buy(buyOrder)
-  //     this.updateBalance(fills, stockSymbol ,stockType)
-  //   } else {
-  //     const buyOrder: BuyOrder = {
-  //       stockType: "no",
-  //       price: price,
-  //       quantity: quantity,
-  //       userId: userId
-  //     }
-  //     orderBook.buy(buyOrder)
-  //   }
-  // }
+    if (userBalance.available < requiredBalance) {
+      return {
+        type: "Not sufficient fund",
+        payload: {
+          msg: "Not sufficient balance"
+        }
+      } 
+    } else {
+      this.inrbalances[userId]!.available -= requiredBalance
+      this.inrbalances[userId]!.locked += requiredBalance
+    }
+
+    if (stockType == "yes") {
+
+      // here need to fix these orderbook types
+
+
+      let yesSortedKeys = Object.keys(orderBook.yes!).sort() 
+      yesSortedKeys.filter((key)=>{parseInt(key)<=price})
+    
+      const buyOrder: BuyOrder = {
+        stockType: "yes",
+        price: price,
+        quantity: quantity,
+        sortedKeys : yesSortedKeys,
+        userId: userId
+      }
+      orderBook.buy(buyOrder)
+      this.updateBalance(fills, stockSymbol ,stockType)
+    } else {
+      let filteredObject =  this.filterAndSortOrders(orderBook.no, price)
+      const buyOrder: BuyOrder = {
+        stockType: "no",
+        price: price,
+        quantity: quantity,
+        filteredObject:filteredObject,
+        userId: userId
+      }
+      orderBook.buy(buyOrder)
+    }
+  }
 
   // sell(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string, price: number) {
 
@@ -572,4 +584,16 @@ export class Engine {
   //  }
 
   // updateStock() { }
+
+  
+ filterAndSortOrders(orderBook: Order, maxPrice: number) {
+  // Convert the orderBook object into an array of objects with price as a number
+  const filteredOrders = Object.entries(orderBook)
+    .filter(([price]) => parseFloat(price) <= maxPrice) // Filter by maxPrice
+    .map(([price, data]) => ({ price: parseFloat(price), ...data })); // Convert price to number and add to object
+
+  // Sort the filtered orders by price in ascending order
+  return filteredOrders.sort((a, b) => a.price - b.price);
 }
+}
+
