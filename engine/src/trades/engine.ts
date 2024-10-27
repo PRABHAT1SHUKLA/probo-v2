@@ -144,7 +144,14 @@ export class Engine {
         }
         break;
       }
-        
+
+      case BUY_ORDER: {
+        const { userId, price, quantity, stockSymbol, stockType } = message.data
+        const response = this.buyOrder(userId, quantity, price, stockType, stockSymbol)
+        RedisManager.getInstance().sendToApi(clientId, response)
+        break;
+      }
+
       case SELL_ORDER: {
         try {
           const userId = message.data.userId;
