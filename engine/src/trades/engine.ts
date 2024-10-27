@@ -1,5 +1,6 @@
 import { RedisManager } from "../RedisManager";
 import {
+  BUY_ORDER,
   CREATE_MARKET,
   CREATE_USER,
   MessageFromApi,
@@ -116,7 +117,7 @@ export class Engine {
     clientId: string;
   }) {
     switch (message.type) {
-      case CREATE_USER:
+      case CREATE_USER: {
         const userId = message.data.userId;
         if (!this.inrbalances[userId]) {
           this.inrbalances[userId] = {
@@ -142,7 +143,9 @@ export class Engine {
           });
         }
         break;
-      case SELL_ORDER:
+      }
+        
+      case SELL_ORDER: {
         try {
           const userId = message.data.userId;
           const quantity = message.data.quantity;
@@ -173,7 +176,9 @@ export class Engine {
           });
         }
         break;
-      case ONRAMP:
+      }
+        
+      case ONRAMP: {
         const id = message.data.userId;
         const amount = Number(message.data.amount);
         this.onRamp(id, amount);
@@ -185,8 +190,9 @@ export class Engine {
           },
         });
         break;
-
-      case CREATE_MARKET:
+      }
+        
+      case CREATE_MARKET: {
         const isMarketCreated = this.createMarket(message.data.stockSymbol);
         if (isMarketCreated) {
           RedisManager.getInstance().sendToApi(clientId, {
@@ -204,8 +210,9 @@ export class Engine {
           });
         }
         break;
-
-      case MINT:
+      }
+        
+      case MINT: {
         const response = this.onMint(
           message.data.userId,
           message.data.price,
@@ -215,8 +222,9 @@ export class Engine {
         console.log(this.inrbalances);
         console.log(JSON.stringify(this.stockbalances));
         break;
-
-      case USER_BALANCE:
+      }
+        
+      case USER_BALANCE: {
         if (!this.inrbalances[message.data.userId]) {
           RedisManager.getInstance().sendToApi(clientId, {
             type: "NOT_PRESENT",
@@ -233,8 +241,9 @@ export class Engine {
           });
         }
         break;
-
-      case STOCK_SYMBOL:
+      }
+        
+      case STOCK_SYMBOL: {
         const orderBook = this.orderbooks.find(
           (o) => o.stockSymbol === message.data.stockSymbol
         );
@@ -253,6 +262,17 @@ export class Engine {
             },
           });
         }
+        break;
+      }
+
+      default: {
+        RedisManager.getInstance().sendToApi(clientId, {
+          type: "NoCaseMatched",
+          payload: {
+            msg: "No case matched"
+          }
+        })
+      }
     }
   }
 
