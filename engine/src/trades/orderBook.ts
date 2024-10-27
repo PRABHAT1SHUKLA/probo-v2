@@ -69,6 +69,10 @@ export class Orderbook {
             total: quantity,
             users: { [userId]: quantity },
           },
+          reverseOrders:{
+            total: 0,
+            users: {},
+          }
         };
       } else {
         this.yes[price]!.orders.total += quantity;
@@ -88,6 +92,10 @@ export class Orderbook {
             total: quantity,
             users: { userId: quantity },
           },
+          reverseOrders:{
+            total: 0,
+            users: {},
+          }
         };
       } else {
         this.no[price]!.orders.total += quantity;
