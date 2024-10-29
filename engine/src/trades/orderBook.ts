@@ -91,32 +91,34 @@ export class Orderbook {
         }
       
        } else {
-      if (this.no === null || !this.no[price]) {
-        this.no = {
-          [price]: {
-            orders: {
-              total: quantity,
-              users: {
-                [userId]: quantity
+        if (this.no === null ){
+          this.no={}
+        }
+        if(!this.no[price]) {
+          this.no[price]= {
+              orders: {
+                total: quantity,
+                users: {
+                  [userId]: quantity
+                }
+              },
+              reverseOrders: {
+                total: 0,
+                users: {}
               }
-            },
-            reverseOrders: {
-              total: 0,
-              users: {}
             }
+            return;
+          }else{
+            this.no[price].orders.total += quantity;
+            if (!this.no[price].orders.users[userId]) {
+              this.no[price].orders.users[userId] = quantity;
+            } else {
+              this.no[price].orders.users[userId] += quantity;
+            }
+            return;
+  
           }
-        };
-        return;
-      }
-
-      this.no[price]!.orders.total += quantity;
-      if (!this.no[price]!.orders.users[userId]) {
-        this.no[price]!.orders.users[userId] = quantity;
-      } else {
-        this.no[price]!.orders.users[userId] += quantity;
-      }
-      return;
-    }
+       }
   }
 
   isObjectEmpty(obj: object): boolean {
