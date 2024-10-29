@@ -33,7 +33,7 @@ export interface Fills {
   price: number;
 }
 
-export interface reverse {
+export interface Reverse {
   userId: string;
   otherUserId: string;
   amount: number;

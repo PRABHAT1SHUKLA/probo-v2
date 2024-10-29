@@ -10,9 +10,9 @@ import {
   STOCK_SYMBOL,
   USER_BALANCE,
 } from "../types/fromApi";
-import { BuyOrder, Orderbook, SellOrder , Order} from "./orderBook";
+import { BuyOrder, Orderbook, SellOrder, Order } from "./orderBook";
 import fs from "fs";
-import { Fills, reverse } from "./orderBook";
+import { Fills, Reverse } from "./orderBook";
 import { availableMemory } from "process";
 
 interface UserBalance {
@@ -184,7 +184,7 @@ export class Engine {
         }
         break;
       }
-        
+
       case ONRAMP: {
         const id = message.data.userId;
         const amount = Number(message.data.amount);
@@ -198,7 +198,7 @@ export class Engine {
         });
         break;
       }
-        
+
       case CREATE_MARKET: {
         const isMarketCreated = this.createMarket(message.data.stockSymbol);
         if (isMarketCreated) {
@@ -218,7 +218,7 @@ export class Engine {
         }
         break;
       }
-        
+
       case MINT: {
         const response = this.onMint(
           message.data.userId,
@@ -230,7 +230,7 @@ export class Engine {
         console.log(JSON.stringify(this.stockbalances));
         break;
       }
-        
+
       case USER_BALANCE: {
         if (!this.inrbalances[message.data.userId]) {
           RedisManager.getInstance().sendToApi(clientId, {
@@ -249,7 +249,7 @@ export class Engine {
         }
         break;
       }
-        
+
       case STOCK_SYMBOL: {
         const orderBook = this.orderbooks.find(
           (o) => o.stockSymbol === message.data.stockSymbol
@@ -294,7 +294,7 @@ export class Engine {
       }
     }
 
-   
+
 
     const userBalance = this.inrbalances[userId]
 
@@ -306,7 +306,7 @@ export class Engine {
           msg: "user doesn't exist"
         }
       }
-    }    
+    }
 
     if (userBalance.available < requiredBalance) {
       return {
@@ -314,7 +314,7 @@ export class Engine {
         payload: {
           msg: "Not sufficient balance"
         }
-      } 
+      }
     } else {
       this.inrbalances[userId]!.available -= requiredBalance
       this.inrbalances[userId]!.locked += requiredBalance
@@ -325,25 +325,28 @@ export class Engine {
       // here need to fix these orderbook types
 
 
-      let yesSortedKeys = Object.keys(orderBook.yes!).sort() 
-      yesSortedKeys.filter((key)=>{parseInt(key)<=price})
-    
+      let yesSortedKeys = Object.keys(orderBook.yes!).sort()
+      yesSortedKeys.filter((key) => { parseInt(key) <= price })
+
       const buyOrder: BuyOrder = {
         stockType: "yes",
         price: price,
         quantity: quantity,
-        sortedKeys : yesSortedKeys,
+        sortedKeys: yesSortedKeys,
         userId: userId
       }
-      orderBook.buy(buyOrder)
-      this.updateBalance(fills, stockSymbol ,stockType)
+      const { fills, reverse, executedQuantity } = orderBook.buy(buyOrder)
+
+      this.updateFillsBalance(fills, stockSymbol, stockType)
+
+      this.updateReverseBalance(reverse, stockSymbol, stockType)
     } else {
-      let filteredObject =  this.filterAndSortOrders(orderBook.no, price)
+      let filteredObject = this.filterAndSortOrders(orderBook.no, price)
       const buyOrder: BuyOrder = {
         stockType: "no",
         price: price,
         quantity: quantity,
-        filteredObject:filteredObject,
+        filteredObject: filteredObject,
         userId: userId
       }
       orderBook.buy(buyOrder)
@@ -509,10 +512,10 @@ export class Engine {
             msg: "Not Enough yes stocks to sell",
           },
         };
-      } 
+      }
       this.stockbalances[userId]![stockSymbol]!.yes!.quantity -= quantity;
       this.stockbalances[userId]![stockSymbol]!.yes!.locked += quantity;
-      
+
       const order: SellOrder = {
         userId: userId,
         price: price,
@@ -537,17 +540,17 @@ export class Engine {
             msg: "not enough stock balance to sell"
           }
         }
-      } 
+      }
       this.stockbalances[userId]![stockSymbol]!.no!.quantity -= quantity;
       this.stockbalances[userId]![stockSymbol]!.no!.locked += quantity;
-        
+
       const order: SellOrder = {
         userId: userId,
         price: price,
         stockType: "no",
         quantity: quantity,
       };
-        //implement ws logic here
+      //implement ws logic here
       orderBook.sell(order);
       return { userId, quantity, price, stockType, stockSymbol };
     }
@@ -585,15 +588,34 @@ export class Engine {
 
   // updateStock() { }
 
-  
- filterAndSortOrders(orderBook: Order, maxPrice: number) {
-  // Convert the orderBook object into an array of objects with price as a number
-  const filteredOrders = Object.entries(orderBook)
-    .filter(([price]) => parseFloat(price) <= maxPrice) // Filter by maxPrice
-    .map(([price, data]) => ({ price: parseFloat(price), ...data })); // Convert price to number and add to object
+ updateFillsBalance(Fills: Fills[], stockSymbol: string, stockType: string) {
 
-  // Sort the filtered orders by price in ascending order
-  return filteredOrders.sort((a, b) => a.price - b.price);
-}
+    Fills.map((fill) => {
+      this.inrbalances[fill.userId]!.locked -= fill.amount * fill.price
+
+      if (stockType == "yes") {
+        this.stockbalances[fill.otherUserId]![stockSymbol]!.yes!.locked -= fill.amount
+        this.stockbalances[fill.userId]![stockSymbol]!.yes!.quantity += fill.amount
+      } else {
+        this.stockbalances[fill.otherUserId]![stockSymbol]!.no!.locked -= fill.amount
+        this.stockbalances[fill.userId]![stockSymbol]!.no!.quantity += fill.amount
+      }
+    })
+  }
+
+updateReverseBalance(reverse: Reverse[], stockSymbol: string, stockType: string) {
+    reverse.map((reverse) => {
+      this.inrbalances[reverse.userId]!.locked -= reverse.amount * reverse.price
+      this.inrbalances[reverse.otherUserId]!.locked -= reverse.amount * (10 - reverse.price)
+
+      if (stockType == "yes") {
+        this.stockbalances[reverse.otherUserId]![stockSymbol]!.yes!.quantity += reverse.amount
+        this.stockbalances[reverse.userId]![stockSymbol]!.yes!.quantity += reverse.amount
+      } else {
+        this.stockbalances[reverse.otherUserId]![stockSymbol]!.yes!.quantity += reverse.amount
+        this.stockbalances[reverse.userId]![stockSymbol]!.yes!.quantity += reverse.amount
+      }
+    })
+  }
 }
 
