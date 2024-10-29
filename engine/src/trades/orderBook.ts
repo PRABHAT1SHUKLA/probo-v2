@@ -62,9 +62,11 @@ export class Orderbook {
   sell(sellorder: SellOrder) {
     const { userId, price, quantity, stockType } = sellorder;
     if (stockType == "yes") {
-      if (this.yes === null || !this.yes[price]) {
-        this.yes = {
-          [price]: {
+      if (this.yes === null ){
+        this.yes={}
+      }
+      if(!this.yes[price]) {
+        this.yes[price]= {
             orders: {
               total: quantity,
               users: {
@@ -76,18 +78,19 @@ export class Orderbook {
               users: {}
             }
           }
-        };
-        return;
-      }
+          return;
+        }else{
+          this.yes[price].orders.total += quantity;
+          if (!this.yes[price].orders.users[userId]) {
+            this.yes[price].orders.users[userId] = quantity;
+          } else {
+            this.yes[price].orders.users[userId] += quantity;
+          }
+          return;
 
-      this.yes[price].orders.total += quantity;
-      if (!this.yes[price].orders.users[userId]) {
-        this.yes[price].orders.users[userId] = quantity;
-      } else {
-        this.yes[price].orders.users[userId] += quantity;
-      }
-      return;
-    } else {
+        }
+      
+       } else {
       if (this.no === null || !this.no[price]) {
         this.no = {
           [price]: {
