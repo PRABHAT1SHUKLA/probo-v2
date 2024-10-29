@@ -329,7 +329,8 @@ export class Engine {
         userId: userId
       }
       const { fills, reverse, executedQuantity } = orderBook.buy(buyOrder)
-
+      console.log("Orderbook", JSON.stringify(orderBook))
+      console.log(fills, reverse)
       this.updateFillsBalance(fills, stockSymbol, stockType)
 
       this.updateReverseBalance(reverse, stockSymbol, stockType)
