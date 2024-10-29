@@ -121,8 +121,8 @@ export class Orderbook {
   }
 
   buy({ userId, quantity, price, stockType, sortedKeys }: BuyOrder) {
-    let fills = [];
-    let reverse = [];
+    let fills : Fills[] = [];
+    let reverse : Reverse[] = [];
     let executedQuantity = 0;
 
     if(stockType === "yes" && this.yes !== null && this.no !== null) {

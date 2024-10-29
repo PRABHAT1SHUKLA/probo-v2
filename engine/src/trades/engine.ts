@@ -341,15 +341,17 @@ export class Engine {
 
       this.updateReverseBalance(reverse, stockSymbol, stockType)
     } else {
-      let filteredObject = this.filterAndSortOrders(orderBook.no, price)
-      const buyOrder: BuyOrder = {
+      let noSortedKeys = Object.keys(orderBook.no!).sort()
+      noSortedKeys.filter((key) => { parseInt(key) <= price })
+
+       const buyOrder: BuyOrder = {
         stockType: "no",
         price: price,
         quantity: quantity,
-        filteredObject: filteredObject,
+        sortedKeys: noSortedKeys,
         userId: userId
       }
-      orderBook.buy(buyOrder)
+      const { fills, reverse, executedQuantity} = orderBook.buy(buyOrder)
     }
   }
 
