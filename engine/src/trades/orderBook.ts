@@ -29,14 +29,14 @@ export interface Order {
 export interface Fills {
   userId: string;
   otherUserId: string;
-  amount: number;
+  quantity: number;
   price: number;
 }
 
 export interface Reverse {
   userId: string;
   otherUserId: string;
-  amount: number;
+  quantity: number;
   price: number;
 }
 
@@ -143,7 +143,6 @@ export class Orderbook {
             reverseOrders: { total: quantity, users: { [userId]: quantity } },
           };
           return { reverse, fills, executedQuantity };
-          //this.no[price].reverseOrders!.users[userId] = quantity;
         } else {
           this.no[price].reverseOrders.total += quantity;
           if (!this.no[price].reverseOrders.users[userId]) {
@@ -154,17 +153,6 @@ export class Orderbook {
           return{ reverse, fills, executedQuantity };
         }
       }
-      // {
-      //   reverseOrder = {
-      //     total: 12,
-      //     users: {
-      //       "1": 2,
-      //       "2": 3,
-      //       "3": 7
-      //     }
-      //   }
-      // }
-
       let remaining = quantity
 
       // Case 2: HERE all "YES" ORDER WAS AVAILABLE no need to create new ReverseOrders
@@ -184,7 +172,7 @@ export class Orderbook {
                 reverse.push({
                   userId, // This is the user who is buying reverse Order which someone created
                   otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity,
+                  quantity: userOrderQuantity!,
                   price: 10 - price
                 })
                 delete this.yes[parseInt(key)]?.reverseOrders.users[user]
@@ -216,7 +204,7 @@ export class Orderbook {
                 reverse.push({
                   userId, // This is the user who is buying reverse Order which someone created
                   otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity,
+                  quantity: userOrderQuantity!,
                   price: 10 - price
                 })
                 delete this.yes[parseInt(key)]?.reverseOrders.users[user]
@@ -234,7 +222,7 @@ export class Orderbook {
                 reverse.push({
                   userId, // This is the user who is buying reverse Order which someone created
                   otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity,
+                  quantity: userOrderQuantity!,
                   price: 10 - price
                 })
                 delete this.yes[parseInt(key)]?.orders.users[user]
@@ -266,7 +254,7 @@ export class Orderbook {
                 fills.push({
                   userId, // This is the user who is buying reverse Order which someone created
                   otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity,
+                  quantity: userOrderQuantity!,
                   price: 10 - price
                 })
                 delete this.yes[parseInt(key)]?.orders.users[user]
@@ -294,7 +282,7 @@ export class Orderbook {
                 reverse.push({
                   userId, // This is the user who is buying reverse Order which someone created
                   otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity,
+                  quantity: userOrderQuantity!,
                   price: 10 - price
                 })
                 delete this.yes[parseInt(key)]?.reverseOrders.users[user]
@@ -314,7 +302,7 @@ export class Orderbook {
                 fills.push({
                   userId, // This is the user who is buying reverse Order which someone created
                   otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity,
+                  quantity: userOrderQuantity!,
                   price: 10 - price
                 })
                 delete this.yes[parseInt(key)]?.orders.users[user]
@@ -342,6 +330,8 @@ export class Orderbook {
         return { reverse, fills, executedQuantity };
       } 
     }
+
+    return { reverse, fills, executedQuantity }
   }
 
   getDepth(stockSymbol: string) {
