@@ -129,6 +129,7 @@ export class Orderbook {
     let fills : Fills[] = [];
     let reverse : Reverse[] = [];
     let executedQuantity = 0;
+    
 
     if(this.yes === null) {
       this.yes = {}
@@ -139,6 +140,7 @@ export class Orderbook {
     }
 
     if(stockType === "yes") {
+      console.log("1 start")
       let totalAvailableQuantity = 0;
       let totalNormalOrdersQuantity = 0;
       let totalReverseOrdersQuanity = 0;
@@ -147,8 +149,8 @@ export class Orderbook {
         totalNormalOrdersQuantity += this.yes![parseInt(key)]!.orders!.total
         totalReverseOrdersQuanity += this.yes![parseInt(key)]!.reverseOrders!.total
       })
-
-      console.log()
+       
+      console.log(sortedKeys , totalAvailableQuantity, totalNormalOrdersQuantity, totalReverseOrdersQuanity)
       // Case1: No order was available so we'll create a reverse order in "no"
       if (sortedKeys.length === 0 && totalAvailableQuantity === 0) {
         if (!this.no[price]) {
@@ -168,19 +170,24 @@ export class Orderbook {
         }
       }
       let remaining = quantity
+      console.log("2 point")
 
       // Case 2: HERE all "YES" ORDER WAS AVAILABLE no need to create new ReverseOrders
       if (quantity <= totalAvailableQuantity) {
+
+        console.log("3. inside loop ")
         for(const key in sortedKeys) {
           if(remaining === 0) break; // Write return instead of break;
 
           if(this.yes![parseInt(key)]?.reverseOrders.total! >= remaining) {
             this.yes![parseInt(key)]!.reverseOrders.total -= remaining
             const usersKey = Object.keys(this.yes![parseInt(key)]!.reverseOrders.users)
+            console.log("userkey", usersKey)
             for(const user in usersKey) {
               const userOrderQuantity = this.yes[parseInt(key)]!.reverseOrders!.users[user];
               if(remaining === 0) break;
               if(userOrderQuantity! <= remaining) {
+                console.log("inside if last point")
                 remaining -= userOrderQuantity!
                 executedQuantity += userOrderQuantity!
                 reverse.push({
