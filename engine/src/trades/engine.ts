@@ -75,7 +75,7 @@ export class Engine {
       });
   }
   setstockbalances() {
-    (this.stockbalances["user1"] = {
+    (this.stockbalances["2"] = {
       btc: {
         yes: {
           quantity: 50,
@@ -87,7 +87,7 @@ export class Engine {
         },
       },
     }),
-      (this.stockbalances["user2"] = {
+      (this.stockbalances["1"] = {
         btc: {
           yes: {
             quantity: 50,
@@ -440,7 +440,7 @@ export class Engine {
       (o) => o.stockSymbol === stockSymbol
     );
     if (!orderBook) {
-      const newOrderBook = new Orderbook(stockSymbol, null, null);
+      const newOrderBook = new Orderbook(stockSymbol);
       this.orderbooks.push(newOrderBook);
       return true;
     }
@@ -552,8 +552,12 @@ export class Engine {
 
   // updateStock() { }
 
-  updateFillsBalance(Fills: Fills[], stockSymbol: string, stockType: string) {
-    Fills.map((fill) => {
+  updateFillsBalance(fills: Fills[], stockSymbol: string, stockType: string) {
+    if(fills.length === 0) {
+      return;
+    }
+    console.log("Sadhu Pratham", fills)
+    fills.forEach((fill) => {
       this.inrbalances[fill.userId]!.locked -= fill.quantity * fill.price
 
       if (stockType == "yes") {
@@ -566,17 +570,21 @@ export class Engine {
     })
   }
 
-updateReverseBalance(reverse: Reverse[], stockSymbol: string, stockType: string) {
-    reverse.map((reverse) => {
-      this.inrbalances[reverse.userId]!.locked -= reverse.quantity * reverse.price
-      this.inrbalances[reverse.otherUserId]!.locked -= reverse.quantity * (10 - reverse.price)
+  updateReverseBalance(reverse: Reverse[], stockSymbol: string, stockType: string) {
+    if(reverse.length === 0) {
+      return;
+    }
+    console.log("Pratham Sadhu", reverse)
+    reverse.forEach((rev) => {
+      this.inrbalances[rev.userId]!.locked -= rev.quantity * rev.price
+      this.inrbalances[rev.otherUserId]!.locked -= rev.quantity * (1000 - rev.price)
 
       if (stockType == "yes") {
-        this.stockbalances[reverse.otherUserId]![stockSymbol]!.yes!.quantity += reverse.quantity
-        this.stockbalances[reverse.userId]![stockSymbol]!.yes!.quantity += reverse.quantity
+        this.stockbalances[rev.otherUserId]![stockSymbol]!.yes!.quantity += rev.quantity
+        this.stockbalances[rev.userId]![stockSymbol]!.yes!.quantity += rev.quantity
       } else {
-        this.stockbalances[reverse.otherUserId]![stockSymbol]!.yes!.quantity += reverse.quantity
-        this.stockbalances[reverse.userId]![stockSymbol]!.yes!.quantity += reverse.quantity
+        this.stockbalances[rev.otherUserId]![stockSymbol]!.yes!.quantity += rev.quantity
+        this.stockbalances[rev.userId]![stockSymbol]!.yes!.quantity += rev.quantity
       }
     })
   }
