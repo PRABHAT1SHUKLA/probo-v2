@@ -109,242 +109,241 @@ export class Orderbook {
     let fills : Fills[] = [];
     let reverse : Reverse[] = [];
     let executedQuantity = 0;
-    const orderType = stockType === "yes" ? this.yes : this.no;
+    const normalOrderType = stockType === "yes" ? this.yes : this.no;
     const oppositeOrderType = stockType === "yes" ? this.no : this.yes;
 
     const totalAvailableQuantity = sortedKeys.reduce((total, key) => {
       const keyInt = parseInt(key);
       return (
         total +
-        (orderType[keyInt]?.orders.total || 0) +
-        (orderType[keyInt]?.reverseOrders.total || 0)
+        (normalOrderType[keyInt]?.orders.total || 0) +
+        (normalOrderType[keyInt]?.reverseOrders.total || 0)
       );
     }, 0);
 
-    if(stockType === "yes") {
-      console.log("1 start")
+    console.log("1 start")
 
-      // Case1: No order was available so we'll create a reverse order in "no"
-      if (sortedKeys.length === 0 && totalAvailableQuantity === 0) {
-        if (!this.no[price]) {
-          this.no[price] = {
+    // Case1: No order was available so we'll create a reverse order in "no"
+    if (sortedKeys.length === 0 && totalAvailableQuantity === 0) {
+      if (!oppositeOrderType[price]) {
+        oppositeOrderType[price] = {
+          orders: { total: 0, users: {} },
+          reverseOrders: { total: quantity, users: { [userId]: quantity } },
+        };
+
+        // Doubt: Do we need to push data in reverse array.
+        return { reverse, fills, executedQuantity };
+      } else {
+        oppositeOrderType[price].reverseOrders.total += quantity;
+        if (!oppositeOrderType[price].reverseOrders.users[userId]) {
+          oppositeOrderType[price].reverseOrders.users[userId] = quantity;
+        } else {
+          oppositeOrderType[price].reverseOrders.users[userId] += quantity;
+        }
+
+        return{ reverse, fills, executedQuantity };
+      }
+    }
+    let remaining = quantity
+    console.log("2 point")
+
+    // Case 2: HERE all "YES" ORDER WAS AVAILABLE no need to create new ReverseOrders
+    if (quantity <= totalAvailableQuantity) {
+      console.log("3. inside loop ")
+      sortedKeys.forEach((key) => {
+        
+        if(remaining === 0) return { reverse, fills, executedQuantity }; // Write return instead of break;
+
+        if(normalOrderType[parseInt(key)]?.reverseOrders.total! >= remaining) {
+          normalOrderType[parseInt(key)]!.reverseOrders.total -= remaining;
+          const usersKey = Object.keys(normalOrderType![parseInt(key)]!.reverseOrders.users)
+          console.log("userkey", usersKey)
+
+          usersKey.forEach((user) => {
+            const userOrderQuantity = normalOrderType[parseInt(key)]!.reverseOrders.users[user];
+            if(remaining === 0) return { reverse, fills, executedQuantity };
+
+            if(userOrderQuantity! <= remaining) {
+              console.log("inside if last point")
+              remaining -= userOrderQuantity!
+              executedQuantity += userOrderQuantity!
+
+              reverse.push({
+                userId, // This is the user who is buying reverse Order which someone created
+                otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
+                quantity: userOrderQuantity!,
+                price: 1000 - price
+              })
+
+              delete normalOrderType![parseInt(key)]?.reverseOrders.users[user]
+            } else {
+              executedQuantity += remaining
+              normalOrderType![parseInt(key)]!.reverseOrders!.users[user]! -= remaining // In this line let say user quantity is { "1": 7, "2": 4 }, you want only 2 quantity then { "1": 5, "2": 4 }
+              reverse.push({
+                userId,
+                otherUserId: user,
+                quantity: remaining, // we use reamaing because what is left is whole executed once by a current user
+                price: 1000 - price
+              })
+              // Because order executed at once.
+              remaining = 0;
+            }
+          })
+
+          return { reverse, fills, executedQuantity };
+        } else if (normalOrderType[parseInt(key)]?.reverseOrders.total! < remaining && normalOrderType[parseInt(key)]?.reverseOrders.total! !== 0) {
+          // Because all orders are executed at once
+          normalOrderType![parseInt(key)]!.reverseOrders.total = 0;
+
+          const usersKey = Object.keys(normalOrderType[parseInt(key)]!.reverseOrders.users)
+          usersKey.forEach((user) => {
+            const userOrderQuantity = normalOrderType[parseInt(key)]!.reverseOrders!.users[user];
+            if(remaining === 0) return { reverse, fills, executedQuantity };
+
+            if(userOrderQuantity! <= remaining) {
+              remaining -= userOrderQuantity!
+              executedQuantity += userOrderQuantity!
+              reverse.push({
+                userId, // This is the user who is buying reverse Order which someone created
+                otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
+                quantity: userOrderQuantity!,
+                price: 1000 - price
+              })
+              
+              delete normalOrderType[parseInt(key)]?.reverseOrders.users[user]
+            }
+          }) 
+        } else if(normalOrderType[parseInt(key)]?.orders.total! >= remaining) {
+          // console.log("Hi", this.yes![parseInt(key)]!.orders.total)
+          normalOrderType[parseInt(key)]!.orders.total -= remaining
+          const usersKey = Object.keys(normalOrderType[parseInt(key)]!.orders.users)
+          console.log("userKeys", usersKey)
+          
+          usersKey.map((user) => {
+            const userOrderQuantity = normalOrderType[parseInt(key)]!.orders.users[user];
+            if(remaining === 0) return { reverse, fills, executedQuantity };
+
+            if(userOrderQuantity! <= remaining) {
+              remaining -= userOrderQuantity!
+              executedQuantity += userOrderQuantity!
+              fills.push({
+                userId, // This is the user who is buying reverse Order which someone created
+                otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
+                quantity: userOrderQuantity!,
+                price,
+              })
+
+              delete normalOrderType[parseInt(key)]?.orders.users[user]
+            } else {
+              executedQuantity += remaining
+              normalOrderType[parseInt(key)]!.orders.users[user]! -= remaining // In this line let say user quantity is { "1": 7, "2": 4 }, you want only 2 quantity then { "1": 5, "2": 4 }
+              fills.push({
+                userId,
+                otherUserId: user,
+                quantity: remaining, // we use reamaing because what is left is whole executed once by a current user
+                price,
+              })
+              // Because order executed at once.
+              remaining = 0;
+            }
+          })
+
+          return { reverse, fills, executedQuantity };
+        } else if(normalOrderType[parseInt(key)]?.orders.total! < remaining) {
+          // Because all orders are executed at once
+          normalOrderType[parseInt(key)]!.orders.total = 0;
+
+          const usersKeys = Object.keys(normalOrderType[parseInt(key)]!.orders.users)
+          usersKeys.forEach((user) => {
+            const userOrderQuantity = normalOrderType[parseInt(key)]!.orders.users[user];
+            if(remaining === 0) return { reverse, fills, executedQuantity };
+
+            if(userOrderQuantity! <= remaining) {
+              remaining -= userOrderQuantity!
+              executedQuantity += userOrderQuantity!
+              fills.push({
+                userId, // This is the user who is buying reverse Order which someone created
+                otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
+                quantity: userOrderQuantity!,
+                price: 1000 - price
+              })
+              delete this.yes![parseInt(key)]?.orders.users[user]
+            }
+          }) 
+        }
+      })  
+    } 
+
+    // Demand is more than supply.
+    else {
+      sortedKeys.forEach((key) => {
+        if (normalOrderType[parseInt(key)]?.reverseOrders.total! < remaining) {
+          // Update orderbook
+          // Because all orders are executed at once
+          normalOrderType[parseInt(key)]!.reverseOrders.total = 0;
+
+          const usersKey = Object.keys(normalOrderType[parseInt(key)]!.reverseOrders.users)
+          usersKey.forEach((user) => {
+            const userOrderQuantity = normalOrderType[parseInt(key)]!.reverseOrders!.users[user];
+
+            if(remaining === 0) return { reverse, fills, executedQuantity };
+
+            if(userOrderQuantity! <= remaining) {
+              remaining -= userOrderQuantity!
+              executedQuantity += userOrderQuantity!
+              reverse.push({
+                userId, // This is the user who is buying reverse Order which someone created
+                otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
+                quantity: userOrderQuantity!,
+                price: 1000 - price
+              })
+
+              delete normalOrderType[parseInt(key)]?.reverseOrders.users[user]
+            }
+          }) 
+        } else if(normalOrderType[parseInt(key)]?.orders.total! < remaining) {
+          // Because all orders are executed at once
+          normalOrderType[parseInt(key)]!.orders.total = 0;
+
+          const usersKey = Object.keys(normalOrderType[parseInt(key)]!.orders.users)
+          usersKey.forEach((user) => {
+            const userOrderQuantity = normalOrderType[parseInt(key)]!.orders!.users[user];
+            if(remaining === 0) return { reverse, fills, executedQuantity };
+
+            if(userOrderQuantity! <= remaining) {
+              remaining -= userOrderQuantity!
+              executedQuantity += userOrderQuantity!
+              fills.push({
+                userId, // This is the user who is buying reverse Order which someone created
+                otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
+                quantity: userOrderQuantity!,
+                price: 1000 - price
+              })
+
+              delete normalOrderType[parseInt(key)]?.orders.users[user]
+            }
+          }) 
+        }
+      })
+
+      if(remaining !== 0) {
+        if (!oppositeOrderType[price]) {
+          oppositeOrderType[price] = {
             orders: { total: 0, users: {} },
             reverseOrders: { total: quantity, users: { [userId]: quantity } },
           };
-
-          // Doubt: Do we need to push data in reverse array.
-          return { reverse, fills, executedQuantity };
         } else {
-          this.no[price].reverseOrders.total += quantity;
-          if (!this.no[price].reverseOrders.users[userId]) {
-            this.no[price].reverseOrders.users[userId] = quantity;
-          } else {
-            this.no[price].reverseOrders.users[userId] += quantity;
-          }
+          oppositeOrderType[price].reverseOrders.total += quantity;
 
-          return{ reverse, fills, executedQuantity };
+          if (!oppositeOrderType[price].reverseOrders.users[userId]) {
+            oppositeOrderType[price].reverseOrders.users[userId] = quantity;
+          } else {
+            oppositeOrderType[price].reverseOrders.users[userId] += quantity;
+          }
         }
       }
-      let remaining = quantity
-      console.log("2 point")
-
-      // Case 2: HERE all "YES" ORDER WAS AVAILABLE no need to create new ReverseOrders
-      if (quantity <= totalAvailableQuantity) {
-        console.log("3. inside loop ")
-        sortedKeys.forEach((key) => {
-         
-          if(remaining === 0) return { reverse, fills, executedQuantity }; // Write return instead of break;
-
-          if(this.yes[parseInt(key)]?.reverseOrders.total! >= remaining) {
-            this.yes[parseInt(key)]!.reverseOrders.total -= remaining;
-            const usersKey = Object.keys(this.yes![parseInt(key)]!.reverseOrders.users)
-            console.log("userkey", usersKey)
-
-            usersKey.forEach((user) => {
-              const userOrderQuantity = this.yes[parseInt(key)]!.reverseOrders.users[user];
-              if(remaining === 0) return { reverse, fills, executedQuantity };
-
-              if(userOrderQuantity! <= remaining) {
-                console.log("inside if last point")
-                remaining -= userOrderQuantity!
-                executedQuantity += userOrderQuantity!
-
-                reverse.push({
-                  userId, // This is the user who is buying reverse Order which someone created
-                  otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity!,
-                  price: 10 - price
-                })
-
-                delete this.yes![parseInt(key)]?.reverseOrders.users[user]
-              } else {
-                executedQuantity += remaining
-                this.yes![parseInt(key)]!.reverseOrders!.users[user]! -= remaining // In this line let say user quantity is { "1": 7, "2": 4 }, you want only 2 quantity then { "1": 5, "2": 4 }
-                reverse.push({
-                  userId,
-                  otherUserId: user,
-                  quantity: remaining, // we use reamaing because what is left is whole executed once by a current user
-                  price: 10 - price
-                })
-                // Because order executed at once.
-                remaining = 0;
-              }
-            })
-
-            return { reverse, fills, executedQuantity };
-          } else if (this.yes[parseInt(key)]?.reverseOrders.total! < remaining && this.yes[parseInt(key)]?.reverseOrders.total! !== 0) {
-            // Because all orders are executed at once
-            this.yes![parseInt(key)]!.reverseOrders.total = 0;
-
-            const usersKey = Object.keys(this.yes![parseInt(key)]!.reverseOrders.users)
-            usersKey.forEach((user) => {
-              const userOrderQuantity = this.yes![parseInt(key)]!.reverseOrders!.users[user];
-              if(remaining === 0) return { reverse, fills, executedQuantity };
-
-              if(userOrderQuantity! <= remaining) {
-                remaining -= userOrderQuantity!
-                executedQuantity += userOrderQuantity!
-                reverse.push({
-                  userId, // This is the user who is buying reverse Order which someone created
-                  otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity!,
-                  price: 10 - price
-                })
-                
-                delete this.yes![parseInt(key)]?.reverseOrders.users[user]
-              }
-            }) 
-          } else if(this.yes[parseInt(key)]?.orders.total! >= remaining) {
-            // console.log("Hi", this.yes![parseInt(key)]!.orders.total)
-            this.yes[parseInt(key)]!.orders.total -= remaining
-            const usersKey = Object.keys(this.yes[parseInt(key)]!.orders.users)
-            console.log("userKeys", usersKey)
-            
-            usersKey.map((user) => {
-              const userOrderQuantity = this.yes[parseInt(key)]!.orders.users[user];
-              if(remaining === 0) return { reverse, fills, executedQuantity };
-
-              if(userOrderQuantity! <= remaining) {
-                remaining -= userOrderQuantity!
-                executedQuantity += userOrderQuantity!
-                fills.push({
-                  userId, // This is the user who is buying reverse Order which someone created
-                  otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity!,
-                  price,
-                })
-
-                delete this.yes[parseInt(key)]?.orders.users[user]
-              } else {
-                executedQuantity += remaining
-                this.yes[parseInt(key)]!.orders.users[user]! -= remaining // In this line let say user quantity is { "1": 7, "2": 4 }, you want only 2 quantity then { "1": 5, "2": 4 }
-                fills.push({
-                  userId,
-                  otherUserId: user,
-                  quantity: remaining, // we use reamaing because what is left is whole executed once by a current user
-                  price,
-                })
-                // Because order executed at once.
-                remaining = 0;
-              }
-            })
-
-            return { reverse, fills, executedQuantity };
-          } else if(this.yes[parseInt(key)]?.orders.total! < remaining) {
-            // Because all orders are executed at once
-            this.yes[parseInt(key)]!.orders.total = 0;
-
-            const usersKeys = Object.keys(this.yes[parseInt(key)]!.orders.users)
-            usersKeys.forEach((user) => {
-              const userOrderQuantity = this.yes[parseInt(key)]!.orders.users[user];
-              if(remaining === 0) return { reverse, fills, executedQuantity };
-
-              if(userOrderQuantity! <= remaining) {
-                remaining -= userOrderQuantity!
-                executedQuantity += userOrderQuantity!
-                fills.push({
-                  userId, // This is the user who is buying reverse Order which someone created
-                  otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity!,
-                  price: 10 - price
-                })
-                delete this.yes![parseInt(key)]?.orders.users[user]
-              }
-            }) 
-          }
-        })  
-      } 
-
-      // Demand is more than supply.
-      else {
-        sortedKeys.forEach((key) => {
-          if (this.yes[parseInt(key)]?.reverseOrders.total! < remaining) {
-            // Update orderbook
-            // Because all orders are executed at once
-            this.yes[parseInt(key)]!.reverseOrders.total = 0;
-
-            const usersKey = Object.keys(this.yes[parseInt(key)]!.reverseOrders.users)
-            usersKey.forEach((user) => {
-              const userOrderQuantity = this.yes[parseInt(key)]!.reverseOrders!.users[user];
-
-              if(remaining === 0) return { reverse, fills, executedQuantity };
-
-              if(userOrderQuantity! <= remaining) {
-                remaining -= userOrderQuantity!
-                executedQuantity += userOrderQuantity!
-                reverse.push({
-                  userId, // This is the user who is buying reverse Order which someone created
-                  otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity!,
-                  price: 10 - price
-                })
-
-                delete this.yes[parseInt(key)]?.reverseOrders.users[user]
-              }
-            }) 
-          } else if(this.yes![parseInt(key)]?.orders.total! < remaining) {
-            // Because all orders are executed at once
-            this.yes[parseInt(key)]!.orders.total = 0;
-
-            const usersKey = Object.keys(this.yes![parseInt(key)]!.orders.users)
-            usersKey.forEach((user) => {
-              const userOrderQuantity = this.yes[parseInt(key)]!.orders!.users[user];
-              if(remaining === 0) return { reverse, fills, executedQuantity };
-
-              if(userOrderQuantity! <= remaining) {
-                remaining -= userOrderQuantity!
-                executedQuantity += userOrderQuantity!
-                fills.push({
-                  userId, // This is the user who is buying reverse Order which someone created
-                  otherUserId: user, // This is the user who wants to buy the stock at particular price but he couldn't get due to unavailability.
-                  quantity: userOrderQuantity!,
-                  price: 10 - price
-                })
-
-                delete this.yes[parseInt(key)]?.orders.users[user]
-              }
-            }) 
-          }
-        })
-
-        if(remaining !== 0) {
-          if (!this.no[price]) {
-            this.no[price] = {
-              orders: { total: 0, users: {} },
-              reverseOrders: { total: quantity, users: { [userId]: quantity } },
-            };
-          } else {
-            this.no[price].reverseOrders.total += quantity;
-
-            if (!this.no[price].reverseOrders.users[userId]) {
-              this.no[price].reverseOrders.users[userId] = quantity;
-            } else {
-              this.no[price].reverseOrders.users[userId] += quantity;
-            }
-          }
-        }
-      } 
-    }
+    } 
+    
 
     return { reverse, fills, executedQuantity }
     //some tests remaining

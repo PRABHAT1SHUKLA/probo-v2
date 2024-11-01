@@ -432,15 +432,15 @@ export class Engine {
     }
   }
 
-  // filterAndSortOrders(orderBook: Order, maxPrice: number) {
-  //   // Convert the orderBook object into an array of objects with price as a number
-  //   const filteredOrders = Object.entries(orderBook)
-  //     .filter(([price]) => parseFloat(price) <= maxPrice) // Filter by maxPrice
-  //     .map(([price, data]) => ({ price: parseFloat(price), ...data })); // Convert price to number and add to object
+  filterAndSortOrders(orderBook: Order, maxPrice: number) {
+    // Convert the orderBook object into an array of objects with price as a number
+    const filteredOrders = Object.entries(orderBook)
+      .filter(([price]) => parseFloat(price) <= maxPrice) // Filter by maxPrice
+      .map(([price, data]) => ({ price: parseFloat(price), ...data })); // Convert price to number and add to object
 
-  //   // Sort the filtered orders by price in ascending order
-  //   return filteredOrders.sort((a, b) => a.price - b.price);
-  // }
+    // Sort the filtered orders by price in ascending order
+    return filteredOrders.sort((a, b) => a.price - b.price);
+  }
 
   sell(userId: string, quantity: number, stockType: "yes" | "no", stockSymbol: string, price: number) {
     const orderBook = this.orderbooks.find(
@@ -506,38 +506,6 @@ export class Engine {
     }
   }
 
-  // updateBalance(Fills: Fills[] , stockSymbol: string , stockType: "yes"|"no") {
-  //   Fills.forEach((fill) =>{
-  //     const total = fill.amount * fill.price
-  //     this.inrbalances[fill.otherUserId]!.locked -= total
-
-  //     if (!this.stockbalances[fill.userId]) {
-  //       this.stockbalances[fill.userId] = {};
-  //     }
-
-  //     if (!this.stockbalances[fill.userId]![stockSymbol]) {
-  //       this.stockbalances[fill.userId]![stockSymbol] = {
-  //         yes: { locked: 0, quantity: 0 },
-  //         no: { locked: 0, quantity: 0 }
-  //       };
-  //     }
-
-  //     //@ts-ignore
-  //     this.stockbalances[fill.userId][stockSymbol][stockType].locked += fill.amount;
-  //     //@ts-ignore
-  //     this.stockbalances[fill.userId][stockSymbol][stockType].quantity += fill.amount;
-  //   })
-  //  }
-
-  //  updateReverseBalance(reverse: reverse[] , stockSymbol:string , stockType: "yes"|"no"){
-  //   reverse.forEach((reverse)=>{
-
-  //   })
-
-  //  }
-
-  // updateStock() { }
-
   updateFillsBalance(fills: Fills[], stockSymbol: string, stockType: string) {
     if(fills.length === 0) {
       return;
@@ -599,12 +567,12 @@ export class Engine {
       this.inrbalances[rev.userId]!.locked -= rev.quantity * rev.price
       this.inrbalances[rev.otherUserId]!.locked -= rev.quantity * (1000 - rev.price)
 
-      if (stockType == "yes") {
+      if (stockType === "yes") {
         this.stockbalances[rev.otherUserId]![stockSymbol]!.yes!.quantity += rev.quantity
         this.stockbalances[rev.userId]![stockSymbol]!.yes!.quantity += rev.quantity
       } else {
-        this.stockbalances[rev.otherUserId]![stockSymbol]!.yes!.quantity += rev.quantity
-        this.stockbalances[rev.userId]![stockSymbol]!.yes!.quantity += rev.quantity
+        this.stockbalances[rev.otherUserId]![stockSymbol]!.no!.quantity += rev.quantity
+        this.stockbalances[rev.userId]![stockSymbol]!.no!.quantity += rev.quantity
       }
     })
   }
