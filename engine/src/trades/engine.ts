@@ -64,41 +64,27 @@ export class Engine {
     //   this.saveSnapshot();
     // }, 1000 * 3);
   }
-  setinrBalances() {
-    (this.inrbalances["user1"] = {
-      available: 10000,
-      locked: 0,
-    }),
-      (this.inrbalances["user2"] = {
-        available: 10000,
-        locked: 0,
-      });
+
+  private initializeUserBalance(userId: string) {
+    this.inrbalances[userId] = {
+      available: 0,
+      locked: 0
+    }
   }
-  setstockbalances() {
-    (this.stockbalances["2"] = {
-      btc: {
+
+  private initializestockbalances({ userId, stockSymbol }: { userId: string, stockSymbol: string }) {
+    this.stockbalances[userId] = {
+      [stockSymbol]: {
         yes: {
-          quantity: 50,
-          locked: 0,
+          quantity: 0,
+          locked: 0
         },
         no: {
-          quantity: 50,
-          locked: 0,
-        },
-      },
-    }),
-      (this.stockbalances["1"] = {
-        btc: {
-          yes: {
-            quantity: 50,
-            locked: 0,
-          },
-          no: {
-            quantity: 50,
-            locked: 0,
-          },
-        },
-      });
+          quantity: 0,
+          locked: 0
+        }
+      }
+    }
   }
 
   // saveSnapshot() {
@@ -556,8 +542,26 @@ export class Engine {
     if(fills.length === 0) {
       return;
     }
+
     console.log("Sadhu Pratham", fills)
     fills.forEach((fill) => {
+
+      if(!this.inrbalances[fill.userId]) {
+        this.initializeUserBalance(fill.userId)
+      }
+
+      if(!this.inrbalances[fill.userId]) {
+        this.initializeUserBalance(fill.otherUserId)
+      }
+
+      if(!this.stockbalances[fill.userId] ) {
+        this.initializestockbalances({ userId: fill.userId, stockSymbol })
+      }
+
+      if(!this.stockbalances[fill.userId] ) {
+        this.initializestockbalances({ userId: fill.otherUserId, stockSymbol })
+      }
+
       this.inrbalances[fill.userId]!.locked -= fill.quantity * fill.price
 
       if (stockType == "yes") {
@@ -576,6 +580,22 @@ export class Engine {
     }
     console.log("Pratham Sadhu", reverse)
     reverse.forEach((rev) => {
+      if(!this.inrbalances[rev.userId]) {
+        this.initializeUserBalance(rev.userId)
+      }
+
+      if(!this.inrbalances[rev.userId]) {
+        this.initializeUserBalance(rev.otherUserId)
+      }
+
+      if(!this.stockbalances[rev.userId] ) {
+        this.initializestockbalances({ userId: rev.userId, stockSymbol })
+      }
+
+      if(!this.stockbalances[rev.userId] ) {
+        this.initializestockbalances({ userId: rev.otherUserId, stockSymbol })
+      }
+
       this.inrbalances[rev.userId]!.locked -= rev.quantity * rev.price
       this.inrbalances[rev.otherUserId]!.locked -= rev.quantity * (1000 - rev.price)
 
