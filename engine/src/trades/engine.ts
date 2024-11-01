@@ -41,28 +41,20 @@ export class Engine {
   private orderbooks: Orderbook[] = [];
   private inrbalances: UserBalance = {};
   private stockbalances: StockBalances = {};
+
   constructor() {
-    // let snapshot = null
-    // try {
-    //   if (process.env.WITH_SNAPSHOT) {
-    //     snapshot = fs.readFileSync("./snapshot.json");
-    //   }
-    // } catch (e) {
-    //   console.log("No snapshot found");
-    // }
-    // if (snapshot) {
-    //   const snapshotSnapshot = JSON.parse(snapshot.toString());
-    //   this.orderbooks = snapshotSnapshot.orderbooks.map((o: any) => new Orderbook(o.stockSymbol, o.yes, o.no));
-    //   this.inrbalances = snapshotSnapshot.inrbalances;
-    //   this.stockbalances = snapshotSnapshot.stockbalances;
-    // } else {
-    //   this.orderbooks = [new Orderbook('new', {}, {})];
-    //   this.setinrBalances();
-    //   this.setstockbalances()
-    // }
-    // setInterval(() => {
-    //   this.saveSnapshot();
-    // }, 1000 * 3);
+    let snapshot = fs.readFileSync("./snapshot.json", "utf-8");
+    
+    if (snapshot) {
+      const snapshotSnapshot = JSON.parse(snapshot.toString());
+      this.orderbooks = snapshotSnapshot.orderbooks.map((o: any) => new Orderbook(o.stockSymbol, o.yes, o.no));
+      this.inrbalances = snapshotSnapshot.inrbalances;
+      this.stockbalances = snapshotSnapshot.stockbalances;
+    }
+
+    setInterval(() => {
+      this.saveSnapshot();
+    }, 1000 * 3);
   }
 
   private initializeUserBalance(userId: string) {
@@ -87,13 +79,15 @@ export class Engine {
     }
   }
 
-  // saveSnapshot() {
-  //   const snapshotSnapshot = {
-  //     orderbooks: this.orderbooks.map(o => o.getSnapshot()),
-  //     balances: this.inrbalances
-  //   }
-  //   fs.writeFileSync("./snapshot.json", JSON.stringify(snapshotSnapshot));
-  // }
+  private saveSnapshot() {
+    const snapshot = {
+      orderbooks: this.orderbooks.map(o => o.getSnapshot()),
+      balances: this.inrbalances,
+      stockbalances: this.stockbalances
+    }
+
+    fs.writeFileSync("./snapshot.json", JSON.stringify(snapshot));
+  }
 
   process({
     message,
