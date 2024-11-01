@@ -2,6 +2,16 @@ import Redis from "ioredis";
 import { UserManager } from "./UserManager";
 
 // Engine will send response to pubsub via channel, where channel names will be of userId
+/*
+  We need subscription and reverseSubricption because in subscription we will store
+  subscription = {
+    "userId": ["stockBalances", "depthChart", "orderbook"],
+  }
+
+  reverseSubscription = {
+    "stockBalances": ["userId1", "userId2", "userId3", "userId4"];
+  }
+*/
 
 export class SubscriptionManager {
   private static instance: SubscriptionManager;
@@ -56,5 +66,14 @@ export class SubscriptionManager {
         this.redisClient.unsubscribe(subscription);
       }
     }
+  }
+
+  public userLeft(userId: string) {
+    console.log("user left " + userId);
+    this.subscriptions.get(userId)?.forEach(s => this.unsubscribe(userId, s));
+  }
+
+  getSubscriptions(userId: string) {
+    return this.subscriptions.get(userId) || [];
   }
 }

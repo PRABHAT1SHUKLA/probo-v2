@@ -22,7 +22,7 @@ export class User {
   }
 
   // This function will send message to the user
-  emit(message: any) {
+  public emit(message: any) {
     this.ws.send(JSON.stringify(message))
   }
 

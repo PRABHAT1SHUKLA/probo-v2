@@ -26,7 +26,7 @@ export class UserManager {
   private registerOnClose(ws: WebSocket, id: string) {
     ws.on("close", () => {
       this.users.delete(id);
-      // SubscriptionManager.getInstance().userLeft(id);
+      SubscriptionManager.getInstance().userLeft(id);
     });
   }
 
