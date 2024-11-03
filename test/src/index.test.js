@@ -1,8 +1,9 @@
-import axios from "axios";
-import WebSocket from "ws";
+const axios = require("axios");
+const WebSocket = require("ws");
+require("dotenv").config()
 
-const HTTP_SERVER_URL = process.env.HTTP_URL;
-const WS_SERVER_URL = process.env.WS_URL;
+const HTTP_SERVER_URL = "http://localhost:3000";
+const WS_SERVER_URL = "ws://localhost:3001";
 
 describe("Trading System Tests", () => {
   let ws;
@@ -16,9 +17,9 @@ describe("Trading System Tests", () => {
     ws.close();
   });
 
-  beforeEach(async () => {
-    await axios.post(`${HTTP_SERVER_URL}/reset`);
-  });
+  // beforeEach(async () => {
+  //   await axios.post(`${HTTP_SERVER_URL}/reset`);
+  // });
 
   const waitForWSMessage = () => {
     return new Promise((resolve) => {
@@ -49,7 +50,7 @@ describe("Trading System Tests", () => {
 
   test("Create symbol and check orderbook", async () => {
     const symbol = "TEST_SYMBOL_30_Dec_2024";
-    await axios.post(`${HTTP_SERVER_URL}/symbol/create/${symbol}`);
+    await axios.post(`${HTTP_SERVER_URL}/create/market`, { stockSymbol: symbol });
 
     const orderbookResponse = await axios.get(
       `${HTTP_SERVER_URL}/orderbook/${symbol}`
@@ -61,7 +62,7 @@ describe("Trading System Tests", () => {
     const userId = "testUser2";
     const symbol = "BTC_USDT_10_Oct_2024_9_30";
     await axios.post(`${HTTP_SERVER_URL}/user/create/${userId}`);
-    await axios.post(`${HTTP_SERVER_URL}/symbol/create/${symbol}`);
+    await axios.post(`${HTTP_SERVER_URL}/create/market`, { stockSymbol: symbol });
     await axios.post(`${HTTP_SERVER_URL}/onramp/inr`, {
       userId,
       amount: 1000000,
@@ -104,7 +105,7 @@ describe("Trading System Tests", () => {
     const userId = "testUser3";
     const symbol = "ETH_USDT_15_Nov_2024_14_00";
     await axios.post(`${HTTP_SERVER_URL}/user/create/${userId}`);
-    await axios.post(`${HTTP_SERVER_URL}/symbol/create/${symbol}`);
+    await axios.post(`${HTTP_SERVER_URL}/create/market`, { stockSymbol: symbol });
     await axios.post(`${HTTP_SERVER_URL}/trade/mint`, {
       userId,
       stockSymbol: symbol,
@@ -155,7 +156,7 @@ describe("Trading System Tests", () => {
 
     await axios.post(`${HTTP_SERVER_URL}/user/create/${buyerId}`);
     await axios.post(`${HTTP_SERVER_URL}/user/create/${sellerId}`);
-    await axios.post(`${HTTP_SERVER_URL}/symbol/create/${symbol}`);
+    await axios.post(`${HTTP_SERVER_URL}/create/market`, { stockSymbol: symbol });
     await axios.post(`${HTTP_SERVER_URL}/onramp/inr`, {
       userId: buyerId,
       amount: 1000000,
@@ -214,7 +215,7 @@ describe("Trading System Tests", () => {
 
     await axios.post(`${HTTP_SERVER_URL}/user/create/${buyerId}`);
     await axios.post(`${HTTP_SERVER_URL}/user/create/${buyer2Id}`);
-    await axios.post(`${HTTP_SERVER_URL}/symbol/create/${symbol}`);
+    await axios.post(`${HTTP_SERVER_URL}/create/market`, { stockSymbol: symbol });
     await axios.post(`${HTTP_SERVER_URL}/onramp/inr`, {
       userId: buyerId,
       amount: 1000000,
@@ -276,7 +277,7 @@ describe("Trading System Tests", () => {
     await axios.post(`${HTTP_SERVER_URL}/user/create/${buyerId}`);
     await axios.post(`${HTTP_SERVER_URL}/user/create/${buyer2Id}`);
     await axios.post(`${HTTP_SERVER_URL}/user/create/${buyer3Id}`);
-    await axios.post(`${HTTP_SERVER_URL}/symbol/create/${symbol}`);
+    await axios.post(`${HTTP_SERVER_URL}/create/market`, { stockSymbol: symbol });
     await axios.post(`${HTTP_SERVER_URL}/onramp/inr`, {
       userId: buyerId,
       amount: 1000000,
@@ -392,7 +393,7 @@ describe("Trading System Tests", () => {
     await axios.post(`${HTTP_SERVER_URL}/user/create/${seller1Id}`);
     await axios.post(`${HTTP_SERVER_URL}/user/create/${seller2Id}`);
     await axios.post(`${HTTP_SERVER_URL}/user/create/${seller3Id}`);
-    await axios.post(`${HTTP_SERVER_URL}/symbol/create/${symbol}`);
+    await axios.post(`${HTTP_SERVER_URL}/create/market`, { stockSymbol: symbol });
     await axios.post(`${HTTP_SERVER_URL}/trade/mint`, {
       userId: seller1Id,
       stockSymbol: symbol,
