@@ -1,4 +1,5 @@
 import Redis from "ioredis";
+import { WsMessage } from "./types/toWs";
 
 // export const RedisManager = new Redis()
 
