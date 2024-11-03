@@ -13,7 +13,6 @@ import {
 import { BuyOrder, Orderbook, SellOrder, Order } from "./orderBook";
 import fs from "fs";
 import { Fills, Reverse } from "./orderBook";
-import { availableMemory } from "process";
 
 interface UserBalance {
   [userId: string]: {
@@ -64,7 +63,7 @@ export class Engine {
     }
   }
 
-  private initializestockbalances({ userId, stockSymbol }: { userId: string, stockSymbol: string }) {
+  private initializeStockBalances({ userId, stockSymbol }: { userId: string, stockSymbol: string }) {
     this.stockbalances[userId] = {
       [stockSymbol]: {
         yes: {
@@ -223,7 +222,7 @@ export class Engine {
           RedisManager.getInstance().sendToApi(clientId, {
             type: "USER_BALANCE",
             payload: {
-              msg: this.inrbalances[message.data.userId],
+              balance: this.inrbalances[message.data.userId],
             },
           });
         }
@@ -245,7 +244,9 @@ export class Engine {
           RedisManager.getInstance().sendToApi(clientId, {
             type: "ORDERBOOK",
             payload: {
-              msg: orderBook,
+              stockSymbol: orderBook.stockSymbol,
+              yes: orderBook.yes,
+              no: orderBook.no
             },
           });
         }
@@ -517,11 +518,11 @@ export class Engine {
       }
 
       if(!this.stockbalances[fill.userId] ) {
-        this.initializestockbalances({ userId: fill.userId, stockSymbol })
+        this.initializeStockBalances({ userId: fill.userId, stockSymbol })
       }
 
       if(!this.stockbalances[fill.userId] ) {
-        this.initializestockbalances({ userId: fill.otherUserId, stockSymbol })
+        this.initializeStockBalances({ userId: fill.otherUserId, stockSymbol })
       }
 
       this.inrbalances[fill.userId]!.locked -= fill.quantity * fill.price
@@ -551,11 +552,11 @@ export class Engine {
       }
 
       if(!this.stockbalances[rev.userId] ) {
-        this.initializestockbalances({ userId: rev.userId, stockSymbol })
+        this.initializeStockBalances({ userId: rev.userId, stockSymbol })
       }
 
       if(!this.stockbalances[rev.userId] ) {
-        this.initializestockbalances({ userId: rev.otherUserId, stockSymbol })
+        this.initializeStockBalances({ userId: rev.otherUserId, stockSymbol })
       }
 
       this.inrbalances[rev.userId]!.locked -= rev.quantity * rev.price
@@ -569,6 +570,12 @@ export class Engine {
         this.stockbalances[rev.userId]![stockSymbol]!.no!.quantity += rev.quantity
       }
     })
+  }
+
+  private validateOrder({ userId, quantity, price, userBalance }: { userId: string, quantity: number, price: number, userBalance: UserBalance }) {
+    if(!userBalance[userId]) return false;
+    if(userBalance[userId].available < quantity * price || price <= 0) return false;
+    return true;
   }
 }
 
