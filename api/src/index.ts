@@ -45,8 +45,11 @@ app.post("/order/sell", async (req, res) => {
   const response = await RedisManager.getInstance().sendAndAwait({
     type: SELL_ORDER,
     data: {
-      userId, stockSymbol, quantity, price, stockType
-
+      userId, 
+      stockSymbol, 
+      quantity, 
+      price, 
+      stockType
     }
   })
   res.json(response.payload)
@@ -66,7 +69,6 @@ app.get('/balance/inr/:userId', async (req, res) => {
 })
 
 // get ORDERBOOK FOR A SPECIFIC STOCKSYMBOL
-
 app.get('/orderbook/:stocksymbol', async(req,res)=>{
   const stockSymbol = req.params.stocksymbol;
   const response = await RedisManager.getInstance().sendAndAwait({
