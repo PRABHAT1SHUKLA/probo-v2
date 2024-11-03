@@ -49,12 +49,6 @@ export type MessageFromApi =
       };
     }
   | {
-      type: typeof ORDER_BOOK;
-      data: {
-        market: string;
-      };
-    }
-  | {
       type: typeof STOCK_SYMBOL;
       data: {
         stockSymbol: string;
