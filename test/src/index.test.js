@@ -45,7 +45,7 @@ describe("Trading System Tests", () => {
     const balanceResponse = await axios.get(
       `${HTTP_SERVER_URL}/balance/inr/${userId}`
     );
-    expect(balanceResponse.data.msg).toEqual({ balance: 1000000, locked: 0 });
+    expect(balanceResponse.data).toEqual({ balance: { available: 1000000, locked: 0 } });
   });
 
   test("Create symbol and check orderbook", async () => {
@@ -55,7 +55,11 @@ describe("Trading System Tests", () => {
     const orderbookResponse = await axios.get(
       `${HTTP_SERVER_URL}/orderbook/${symbol}`
     );
-    expect(orderbookResponse.data.msg).toEqual({ stockSymbol: symbol, yes: {}, no: {} });
+    expect(orderbookResponse.data).toEqual({ stockSymbol: symbol, yes: {}, no: {} });
+
+    const onMintResponse = await axios.post(`${HTTP_SERVER_URL}/trade/mint`, { userId: "testUser1", stockSymbol: symbol, price: 50000 })
+
+    // const onSellStock = await axios.post(`${HTTP_SERVER_URL}/order/sell`, { userId: "testUser1", stockSymbol: symbol, price: 850, quantity: 100, stockType: "yes"})
   });
 
   test("Place buy order for yes stock and check WebSocket response", async () => {
@@ -70,8 +74,8 @@ describe("Trading System Tests", () => {
 
     await ws.send(
       JSON.stringify({
-        type: "subscribe",
-        stockSymbol: "BTC_USDT_10_Oct_2024_9_30",
+        method: "SUBSCRIBE",
+        params: ["BTC_USDT_10_Oct_2024_9_30"],
       })
     );
 
@@ -89,15 +93,19 @@ describe("Trading System Tests", () => {
 
     expect(buyOrderResponse.status).toBe(200);
     expect(wsMessage.event).toBe("event_orderbook_update");
-    const message = JSON.parse(wsMessage.message);
+    const message = JSON.parse(wsMessage.data);
     expect(message.no["1.5"]).toEqual({
       total: 100,
       orders: {
-        [userId]: {
-          type: "reverted",
-          quantity: 100,
-        },
+        total: 0,
+        users: {}
       },
+      reverseOrders: {
+        total: 100,
+        users: {
+          [userId]: 100
+        }
+      }
     });
   });
 
