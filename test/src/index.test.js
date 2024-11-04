@@ -92,9 +92,9 @@ describe("Trading System Tests", () => {
     const wsMessage = await promisified;
 
     expect(buyOrderResponse.status).toBe(200);
-    expect(wsMessage.event).toBe("event_orderbook_update");
-    const message = JSON.parse(wsMessage.data);
-    expect(message.no["1.5"]).toEqual({
+    const message = JSON.parse(wsMessage);
+    expect(message.event).toBe("event_orderbook_update");
+    expect(message.data.no["150"]).toEqual({
       total: 100,
       orders: {
         total: 0,
@@ -117,13 +117,13 @@ describe("Trading System Tests", () => {
     await axios.post(`${HTTP_SERVER_URL}/trade/mint`, {
       userId,
       stockSymbol: symbol,
-      quantity: 200,
+      price: 100000,
     });
 
     await ws.send(
       JSON.stringify({
-        type: "subscribe",
-        stockSymbol: "ETH_USDT_15_Nov_2024_14_00",
+        type: "SUBSCRIBE",
+        params: ["ETH_USDT_15_Nov_2024_14_00"],
       })
     );
 
@@ -142,16 +142,18 @@ describe("Trading System Tests", () => {
     const wsMessage = await promisified;
 
     expect(sellOrderResponse.status).toBe(200);
+    const message = JSON.parse(wsMessage);
     expect(wsMessage.event).toBe("event_orderbook_update");
-    const message = JSON.parse(wsMessage.message);
-    expect(message.no["2"]).toEqual({
+    expect(message.data.no["200"]).toEqual({
       total: 100,
       orders: {
-        [userId]: {
-          type: "sell",
-          quantity: 100,
-        },
+        total: 100,
+        users: { [userId]: 100 }
       },
+      reverseOrders: {
+        total: 0,
+        users: {}
+      }
     });
   });
 
@@ -175,7 +177,7 @@ describe("Trading System Tests", () => {
       quantity: 100,
     });
 
-    await ws.send(JSON.stringify({ type: "subscribe", stockSymbol: symbol }));
+    await ws.send(JSON.stringify({ type: "SUBSCRIBE", params: [symbol] }));
 
     const promisified = waitForWSMessage();
     await axios.post(`${HTTP_SERVER_URL}/order/sell`, {
@@ -201,7 +203,7 @@ describe("Trading System Tests", () => {
     const executionWsMessage = await promisified2;
 
     expect(executionWsMessage.event).toBe("event_orderbook_update");
-    expect(executionWsMessage.yes?.[price / 100]).toBeUndefined();
+    expect(executionWsMessage.yes?.[price]).toBeUndefined();
 
     const buyerStockBalance = await axios.get(
       `${HTTP_SERVER_URL}/balance/stock/${buyerId}`
@@ -210,8 +212,8 @@ describe("Trading System Tests", () => {
       `${HTTP_SERVER_URL}/balance/inr/${sellerId}`
     );
 
-    expect(buyerStockBalance.data.msg[symbol].yes.quantity).toBe(quantity);
-    expect(sellerInrBalance.data.msg.balance).toBe(price * quantity);
+    expect(buyerStockBalance.data[symbol].yes.quantity).toBe(quantity);
+    expect(sellerInrBalance.data.payload.balance.available).toBe(price * quantity);
   }, 15000);
 
   test("Execute minting opposite orders with higher quantity and check WebSocket response", async () => {
