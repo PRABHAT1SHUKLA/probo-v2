@@ -180,12 +180,14 @@ export class Engine {
       }
 
       case CREATE_MARKET: {
-        const isMarketCreated = this.createMarket(message.data.stockSymbol);
-        if (isMarketCreated) {
+        const marketCreated = this.createMarket(message.data.stockSymbol);
+        if (marketCreated) {
           RedisManager.getInstance().sendToApi(clientId, {
             type: "MARKET_CREATED",
             payload: {
-              msg: `Market with ${message.data.stockSymbol} has been created`,
+              stockSymbol: message.data.stockSymbol,
+              yes: marketCreated.yes,
+              no: marketCreated.no
             },
           });
         } else {
@@ -424,7 +426,7 @@ export class Engine {
     if (!orderBook) {
       const newOrderBook = new Orderbook(stockSymbol);
       this.orderbooks.push(newOrderBook);
-      return true;
+      return newOrderBook;
     }
   }
 
