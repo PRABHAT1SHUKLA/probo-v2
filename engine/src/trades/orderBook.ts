@@ -125,8 +125,8 @@ export class Orderbook {
 
     // Case1: No order was available so we'll create a reverse order in "no"
     if (sortedKeys.length === 0 && totalAvailableQuantity === 0) {
-      if (!oppositeOrderType[price]) {
-        oppositeOrderType[price] = {
+      if (!oppositeOrderType[1000 - price]) {
+        oppositeOrderType[1000 - price] = {
           orders: { total: 0, users: {} },
           reverseOrders: { total: quantity, users: { [userId]: quantity } },
         };
@@ -134,11 +134,11 @@ export class Orderbook {
         // Doubt: Do we need to push data in reverse array.
         return { reverse, fills, executedQuantity };
       } else {
-        oppositeOrderType[price].reverseOrders.total += quantity;
-        if (!oppositeOrderType[price].reverseOrders.users[userId]) {
-          oppositeOrderType[price].reverseOrders.users[userId] = quantity;
+        oppositeOrderType[1000 - price]!.reverseOrders.total += quantity;
+        if (!oppositeOrderType[1000 - price]!.reverseOrders.users[userId]) {
+          oppositeOrderType[1000 - price]!.reverseOrders.users[userId] = quantity;
         } else {
-          oppositeOrderType[price].reverseOrders.users[userId] += quantity;
+          oppositeOrderType[1000 - price]!.reverseOrders.users[userId]! += quantity;
         }
 
         return{ reverse, fills, executedQuantity };
@@ -327,18 +327,18 @@ export class Orderbook {
       })
 
       if(remaining !== 0) {
-        if (!oppositeOrderType[price]) {
-          oppositeOrderType[price] = {
+        if (!oppositeOrderType[1000 - price]) {
+          oppositeOrderType[1000 - price] = {
             orders: { total: 0, users: {} },
             reverseOrders: { total: quantity, users: { [userId]: quantity } },
           };
         } else {
-          oppositeOrderType[price].reverseOrders.total += quantity;
+          oppositeOrderType[1000 - price]!.reverseOrders.total += quantity;
 
-          if (!oppositeOrderType[price].reverseOrders.users[userId]) {
-            oppositeOrderType[price].reverseOrders.users[userId] = quantity;
+          if (!oppositeOrderType[1000 - price]!.reverseOrders.users[userId]) {
+            oppositeOrderType[1000 - price]!.reverseOrders.users[userId] = quantity;
           } else {
-            oppositeOrderType[price].reverseOrders.users[userId] += quantity;
+            oppositeOrderType[1000 - price]!.reverseOrders.users[userId]! += quantity;
           }
         }
       }
