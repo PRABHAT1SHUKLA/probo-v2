@@ -1,5 +1,7 @@
 //TODO: Can we share the types between the ws layer and the engine?
 
+import { Order } from "../trades/orderBook"
+
 export type TickerUpdateMessage = {
   stream: string, 
   data: {
@@ -24,14 +26,10 @@ export type DepthUpdateMessage = {
 }
 
 export type TradeAddedMessage = {
-  stream: string,
+  event: string,
   data: {
-      e: "trade",
-      t: number,
-      m: boolean,
-      p: string,
-      q: string,
-      s: string, // symbol
+    yes: Order,
+    no: Order
   }
 }
 
