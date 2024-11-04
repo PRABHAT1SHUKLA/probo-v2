@@ -451,7 +451,7 @@ export class Engine {
       };
     }
 
-    
+    this.initializeStockBalances({ userId, stockSymbol })
     console.log("Inside Engine Sell Function -----> ", this.stockbalances)
     if ((stockType = "yes")) {
       if (this.stockbalances[userId]![stockSymbol]!.yes!.quantity < quantity) {
