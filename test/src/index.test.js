@@ -55,7 +55,7 @@ describe("Trading System Tests", () => {
     const orderbookResponse = await axios.get(
       `${HTTP_SERVER_URL}/orderbook/${symbol}`
     );
-    expect(orderbookResponse.data.msg).toEqual({ yes: {}, no: {} });
+    expect(orderbookResponse.data.msg).toEqual({ stockSymbol: symbol, yes: {}, no: {} });
   });
 
   test("Place buy order for yes stock and check WebSocket response", async () => {
