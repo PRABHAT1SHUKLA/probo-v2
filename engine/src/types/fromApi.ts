@@ -6,6 +6,7 @@ export const BUY_ORDER = "BUY_ORDER";
 export const MINT = "MINT";
 export const ORDER_BOOK = "ORDER_BOOK";
 export const STOCK_SYMBOL = "STOCK_SYMBOL";
+export const STOCK_BALANCE = "STOCK_BALANCE";
 export const CREATE_MARKET = "CREATE_MARKET";
 
 export type MessageFromApi =
@@ -47,6 +48,12 @@ export type MessageFromApi =
       data: {
         userId: string;
       };
+    }
+  | {
+      type: typeof STOCK_BALANCE;
+      data: {
+        userId: string;
+      }
     }
   | {
       type: typeof STOCK_SYMBOL;

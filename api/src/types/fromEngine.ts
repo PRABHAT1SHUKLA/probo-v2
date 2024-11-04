@@ -39,4 +39,22 @@ export type MessageFromEngine = {
   payload:{
     msg: string
   }
+} | {
+  type: "STOCK_BALANCE";
+  payload: {
+    stockBalance?: {
+      [userId: string]: {
+        [stockSymbol: string]: {
+          yes?: {
+            quantity: number;
+            locked: number;
+          };
+          no?: {
+            quantity: number;
+            locked: number;
+          };
+        };
+      };
+    }
+  }
 }

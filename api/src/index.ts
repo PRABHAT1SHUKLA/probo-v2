@@ -68,6 +68,16 @@ app.get('/balance/inr/:userId', async (req, res) => {
   res.json(response.payload)
 })
 
+app.get('/balance/stock/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  const response = await RedisManager.getInstance().sendAndAwait({
+    type: "STOCK_BALANCE",
+    data: {
+      userId
+    }
+  })
+})
+
 // get ORDERBOOK FOR A SPECIFIC STOCKSYMBOL
 app.get('/orderbook/:stocksymbol', async(req,res)=>{
   const stockSymbol = req.params.stocksymbol;

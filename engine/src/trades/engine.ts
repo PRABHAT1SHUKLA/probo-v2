@@ -7,6 +7,7 @@ import {
   MINT,
   ONRAMP,
   SELL_ORDER,
+  STOCK_BALANCE,
   STOCK_SYMBOL,
   USER_BALANCE,
 } from "../types/fromApi";
@@ -226,6 +227,25 @@ export class Engine {
             type: "USER_BALANCE",
             payload: {
               balance: this.inrbalances[message.data.userId],
+            },
+          });
+        }
+        break;
+      }
+
+      case STOCK_BALANCE: {
+        if (!this.stockbalances[message.data.userId]) {
+          RedisManager.getInstance().sendToApi(clientId, {
+            type: "NOT_PRESENT",
+            payload: {
+              msg: "User does not exist",
+            },
+          });
+        } else {
+          RedisManager.getInstance().sendToApi(clientId, {
+            type: "STOCK_BALANCE",
+            payload: {
+              stockBalance: this.stockbalances[message.data.userId]
             },
           });
         }
