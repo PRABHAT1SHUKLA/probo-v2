@@ -128,6 +128,7 @@ export class Engine {
         const { userId, price, quantity, stockSymbol, stockType } = message.data
         const response = this.buyOrder(userId, quantity, price, stockType, stockSymbol)
         RedisManager.getInstance().sendToApi(clientId, response)
+        this.publishWsTrade({ userId, stockSymbol })
         break;
       }
 
@@ -449,6 +450,9 @@ export class Engine {
         },
       };
     }
+
+    
+    console.log("Inside Engine Sell Function -----> ", this.stockbalances)
     if ((stockType = "yes")) {
       if (this.stockbalances[userId]![stockSymbol]!.yes!.quantity < quantity) {
         return {
@@ -576,6 +580,18 @@ export class Engine {
     if(!userBalance[userId]) return false;
     if(userBalance[userId].available < quantity * price || price <= 0) return false;
     return true;
+  }
+
+  private publishWsTrade({ userId, stockSymbol }: { userId: string, stockSymbol: string }) {
+    const orderbook = this.orderbooks.find(o => o.stockSymbol === stockSymbol)
+
+    RedisManager.getInstance().publishMessage(stockSymbol, {
+      event: "event_orderbook_update",
+      data: {
+        yes: orderbook?.yes || {},
+        no: orderbook?.no || {}
+      }
+    })
   }
 }
 
