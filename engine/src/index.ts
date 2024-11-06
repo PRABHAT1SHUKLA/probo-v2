@@ -6,9 +6,10 @@ async function main() {
   const engine = new Engine()
 
   while(1){
-    const response = await redisClient.rpop("engineQueue")
+    const response = await redisClient.brpop("engineQueue", 0)
     if(response) {
-      engine.process(JSON.parse(response))
+      const [key, item] = response
+      engine.process(JSON.parse(item))
     }
   }
 }
