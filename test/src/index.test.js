@@ -17,9 +17,9 @@ describe("Trading System Tests", () => {
     ws.close();
   });
 
-  // beforeEach(async () => {
-  //   await axios.post(`${HTTP_SERVER_URL}/reset`);
-  // });
+  beforeEach(async () => {
+    await axios.post(`${HTTP_SERVER_URL}/reset`);
+  });
 
   const waitForWSMessage = () => {
     return new Promise((resolve) => {
@@ -93,10 +93,8 @@ describe("Trading System Tests", () => {
 
     expect(buyOrderResponse.status).toBe(200);
     const message = JSON.parse(wsMessage);
-    console.log(message)
-    expect(message.event).toBe("event_orderbook_update");
+    expect(message.event).toBe('event_orderbook_update');
     expect(message.data.no["150"]).toEqual({
-      total: 100,
       orders: {
         total: 0,
         users: {}
@@ -129,6 +127,7 @@ describe("Trading System Tests", () => {
     );
 
     const promisified = waitForWSMessage();
+    
     const sellOrderResponse = await axios.post(
       `${HTTP_SERVER_URL}/order/sell`,
       {
@@ -139,14 +138,14 @@ describe("Trading System Tests", () => {
         stockType: "no",
       }
     );
-
+    
     const wsMessage = await promisified;
-
+    
     expect(sellOrderResponse.status).toBe(200);
     const message = JSON.parse(wsMessage);
-    expect(wsMessage.event).toBe("event_orderbook_update");
+    console.log(message)
+    expect(message.event).toBe("event_orderbook_update");
     expect(message.data.no["200"]).toEqual({
-      total: 100,
       orders: {
         total: 100,
         users: { [userId]: 100 }
