@@ -1,7 +1,7 @@
 import express from "express"
 import dotenv from "dotenv"
 import { RedisManager } from "./RedisManager"
-import { CREATE_USER, ONRAMP, SELL_ORDER, USER_BALANCE ,MINT, STOCK_SYMBOL, BUY_ORDER ,CREATE_MARKET} from "./types/toEngine"
+import { CREATE_USER, ONRAMP, SELL_ORDER, USER_BALANCE ,MINT, STOCK_SYMBOL, BUY_ORDER ,CREATE_MARKET, RESETALL} from "./types/toEngine"
 dotenv.config()
 
 const PORT = process.env.PORT || 3000
@@ -136,6 +136,14 @@ app.post('/create/market', async (req,res)=>{
   })
 
   res.json(response.payload)
+})
+
+app.post("/reset", async (req, res) => {
+  const response = await RedisManager.getInstance().sendAndAwait({
+    type: RESETALL,
+  })
+
+  res.json(response)
 })
 
 

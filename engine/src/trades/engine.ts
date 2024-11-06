@@ -10,6 +10,7 @@ import {
   STOCK_BALANCE,
   STOCK_SYMBOL,
   USER_BALANCE,
+  RESETALL
 } from "../types/fromApi";
 import { BuyOrder, Orderbook, SellOrder, Order } from "./orderBook";
 import fs from "fs";
@@ -273,6 +274,21 @@ export class Engine {
             },
           });
         }
+        break;
+      }
+
+      case RESETALL: {
+        this.inrbalances = {};
+        this.stockbalances = {};
+
+        // TODO: Use delete object (destructor) so that they can be delete from the memory.
+        this.orderbooks = []
+        RedisManager.getInstance().sendToApi(clientId, {
+          type: "RESETALL",
+          payload: {
+            msg: "Reset all data"
+          }
+        })
         break;
       }
 

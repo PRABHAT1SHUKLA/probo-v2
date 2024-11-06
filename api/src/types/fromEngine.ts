@@ -57,4 +57,9 @@ export type MessageFromEngine = {
       };
     }
   }
+} | {
+  type: "RESETALL",
+  payload: {
+    msg: string;
+  }
 }

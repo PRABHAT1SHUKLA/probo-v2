@@ -8,6 +8,7 @@ export const ORDER_BOOK = "ORDER_BOOK";
 export const STOCK_SYMBOL = "STOCK_SYMBOL";
 export const STOCK_BALANCE = "STOCK_BALANCE";
 export const CREATE_MARKET = "CREATE_MARKET";
+export const RESETALL = "RESETALL";
 
 export type MessageFromApi =
   | {
@@ -74,4 +75,7 @@ export type MessageFromApi =
         stockSymbol: string;
         price: number;
       };
-    };
+    }
+  | {
+    type: typeof RESETALL;
+  }
