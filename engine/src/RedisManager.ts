@@ -13,7 +13,7 @@ export class RedisManager {
   private static instance: RedisManager;
 
   constructor() {
-    this.client = new Redis();
+    this.client = new Redis("rediss://default:AWrbAAIjcDE4YTY5OTQ4ZTc0MzA0ZWIzYTQ0OTQyNzI3MjY2ZTU0NHAxMA@accepted-monster-27355.upstash.io:6379");
   }
 
   public static getInstance() {
