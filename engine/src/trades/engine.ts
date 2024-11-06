@@ -48,7 +48,7 @@ export class Engine {
     if (snapshot) {
       const snapshotSnapshot = JSON.parse(snapshot.toString());
       this.orderbooks = snapshotSnapshot.orderbooks.map((o: any) => new Orderbook(o.stockSymbol, o.yes, o.no));
-      this.inrbalances = snapshotSnapshot.inrbalances;
+      this.inrbalances = snapshotSnapshot.balances;
       this.stockbalances = snapshotSnapshot.stockbalances;
     }
 

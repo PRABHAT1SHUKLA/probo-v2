@@ -23,7 +23,7 @@ describe("Trading System Tests", () => {
 
   const waitForWSMessage = () => {
     return new Promise((resolve) => {
-      ws.once("message", (data) => {
+      ws.on("message", (data) => {
         const parsedData = JSON.parse(data);
         // console.log(parsedData)
         resolve(parsedData);
@@ -93,6 +93,7 @@ describe("Trading System Tests", () => {
 
     expect(buyOrderResponse.status).toBe(200);
     const message = JSON.parse(wsMessage);
+    console.log(message)
     expect(message.event).toBe("event_orderbook_update");
     expect(message.data.no["150"]).toEqual({
       total: 100,
